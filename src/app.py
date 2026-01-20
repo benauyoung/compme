@@ -110,8 +110,8 @@ st.markdown("""
         background: white;
         padding: 2rem;
         border-radius: 0.75rem;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 2px solid #1e3a5f;
+        box-shadow: 0 4px 12px rgba(30, 58, 95, 0.15);
         margin-bottom: 1.5rem;
     }
     
