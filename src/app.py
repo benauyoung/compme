@@ -192,7 +192,7 @@ with st.expander("Enter Offer Letter", expanded=False):
     offer_text = st.text_area(
         "Offer Letter Text",
         height=150,
-        placeholder="Example:\nBase Salary: $120,000\nSign-on Bonus: $10,000\nAnnual Bonus: 15%\nEquity Grant: $100,000 in RSUs vesting over 4 years",
+        placeholder="Paste your entire offer letter here - OpenAI will extract the details automatically!\n\nExample:\nBase Salary: $120,000\nSign-on Bonus: $10,000\nAnnual Bonus: 15%\nEquity Grant: $100,000 in RSUs vesting over 4 years",
         label_visibility="collapsed"
     )
     
