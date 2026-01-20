@@ -340,9 +340,7 @@ with st.container(border=True):
             delta_monthly = mil_results['total_monthly'] - civ_results['net_monthly']
             st.metric(
                 "Monthly Delta",
-                format_delta(delta_monthly),
-                delta=delta_monthly,
-                delta_color="normal"
+                format_delta(delta_monthly)
             )
     
     with comp_tab2:
@@ -377,9 +375,7 @@ with st.container(border=True):
         with col_y3:
             st.metric(
                 "Annual Delta",
-                format_delta(delta_annual),
-                delta=delta_annual,
-                delta_color="normal"
+                format_delta(delta_annual)
             )
 
 st.markdown("<br>", unsafe_allow_html=True)
