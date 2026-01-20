@@ -333,23 +333,8 @@ with col_civ:
                 st.warning(f"⚠️ Applied {equity_calc['risk_discount']:.0f}% risk discount: ${format_currency(equity_calc['adjusted_value'])} adjusted value")
     
     st.markdown('</div>', unsafe_allow_html=True)
-    
-    if total_equity > 0:
-        equity_calc = calculate_rsu_value(total_equity, vesting_years, 0, is_public)
-        annual_rsu = equity_calc['annualized_value']
-    else:
-        annual_rsu = 0
-    
-    civ_results = calculate_civilian_net(
-        base_salary=base_salary,
-        bonus_pct=bonus_pct,
-        total_equity=total_equity,
-        state=state,
-        filing_status=filing_status_civ.lower(),
-        annual_rsu_value=annual_rsu
-    )
 
-# Civilian state and tax filing in sidebar for mobile optimization
+# Civilian state and tax filing in sidebar for mobile optimization (MUST be before civ_results)
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 💼 Civilian Tax Settings")
 
@@ -367,6 +352,23 @@ state = st.sidebar.selectbox(
 )
 
 filing_status_civ = st.sidebar.radio("Tax Filing", ["Single", "Married"], key="civ_filing")
+
+# Calculate civilian results AFTER state and filing_status_civ are defined
+with col_civ:
+    if total_equity > 0:
+        equity_calc = calculate_rsu_value(total_equity, vesting_years, 0, is_public)
+        annual_rsu = equity_calc['annualized_value']
+    else:
+        annual_rsu = 0
+    
+    civ_results = calculate_civilian_net(
+        base_salary=base_salary,
+        bonus_pct=bonus_pct,
+        total_equity=total_equity,
+        state=state,
+        filing_status=filing_status_civ.lower(),
+        annual_rsu_value=annual_rsu
+    )
 
 st.markdown("<br>", unsafe_allow_html=True)
 
