@@ -115,16 +115,6 @@ st.markdown("""
         margin: 1.5rem 0;
     }
     
-    /* Border around Compensation Breakdown section */
-    .comp-breakdown-container {
-        background: white;
-        padding: 2rem;
-        border-radius: 0.75rem;
-        border: 2px solid #1e3a5f;
-        box-shadow: 0 4px 12px rgba(30, 58, 95, 0.15);
-        margin: 1.5rem 0;
-    }
-    
     .input-card {
         background: transparent;
         padding: 0;
@@ -459,8 +449,6 @@ with tab_tax:
     st.markdown(f"**Military Tax Advantage:** ${format_currency(mil_results['tax_advantage_monthly'])}/month")
 
 st.markdown("<br><br>", unsafe_allow_html=True)
-
-st.markdown('<div class="comp-breakdown-container">', unsafe_allow_html=True)
 st.markdown("### Compensation Breakdown")
 
 # Month-to-Month and Year-to-Year Comparison
@@ -526,88 +514,89 @@ with comp_tab2:
             delta_color="normal"
         )
 
-st.markdown('</div>', unsafe_allow_html=True)
-
 st.markdown("<br>", unsafe_allow_html=True)
 
 col_chart1, col_chart2 = st.columns(2)
 
 with col_chart1:
-    st.markdown("#### 🪖 Military Breakdown")
-    mil_chart = go.Figure(data=[
-        go.Bar(
-            x=['Base Pay', 'BAH', 'BAS'],
-            y=[mil_results['base_pay_monthly'], mil_results['bah_monthly'], mil_results['bas_monthly']],
-            marker_color=['#3b82f6', '#10b981', '#10b981'],
-            text=[format_currency(mil_results['base_pay_monthly']), 
-                  format_currency(mil_results['bah_monthly']),
-                  format_currency(mil_results['bas_monthly'])],
-            textposition='auto',
+    with st.container(border=True):
+        st.markdown("#### 🪖 Military Breakdown")
+        mil_chart = go.Figure(data=[
+            go.Bar(
+                x=['Base Pay', 'BAH', 'BAS'],
+                y=[mil_results['base_pay_monthly'], mil_results['bah_monthly'], mil_results['bas_monthly']],
+                marker_color=['#3b82f6', '#10b981', '#10b981'],
+                text=[format_currency(mil_results['base_pay_monthly']), 
+                      format_currency(mil_results['bah_monthly']),
+                      format_currency(mil_results['bas_monthly'])],
+                textposition='auto',
+            )
+        ])
+        mil_chart.update_layout(
+            height=300,
+            margin=dict(l=0, r=0, t=0, b=0),
+            yaxis_title="Monthly $",
+            showlegend=False
         )
-    ])
-    mil_chart.update_layout(
-        height=300,
-        margin=dict(l=0, r=0, t=0, b=0),
-        yaxis_title="Monthly $",
-        showlegend=False
-    )
-    st.plotly_chart(mil_chart, use_container_width=True)
+        st.plotly_chart(mil_chart, use_container_width=True)
 
 with col_chart2:
-    st.markdown("#### 💼 Civilian Breakdown")
-    civ_base_monthly = base_salary / 12
-    civ_bonus_monthly = civ_results['bonus_net'] / 12
-    civ_rsu_monthly = civ_results.get('rsu_net', 0) / 12
-    
-    civ_chart = go.Figure(data=[
-        go.Bar(
-            x=['Base', 'Bonus', 'RSU'],
-            y=[civ_base_monthly, civ_bonus_monthly, civ_rsu_monthly],
-            marker_color=['#3b82f6', '#8b5cf6', '#ec4899'],
-            text=[format_currency(civ_base_monthly), 
-                  format_currency(civ_bonus_monthly),
-                  format_currency(civ_rsu_monthly)],
-            textposition='auto',
+    with st.container(border=True):
+        st.markdown("#### 💼 Civilian Breakdown")
+        civ_base_monthly = base_salary / 12
+        civ_bonus_monthly = civ_results['bonus_net'] / 12
+        civ_rsu_monthly = civ_results.get('rsu_net', 0) / 12
+        
+        civ_chart = go.Figure(data=[
+            go.Bar(
+                x=['Base', 'Bonus', 'RSU'],
+                y=[civ_base_monthly, civ_bonus_monthly, civ_rsu_monthly],
+                marker_color=['#3b82f6', '#8b5cf6', '#ec4899'],
+                text=[format_currency(civ_base_monthly), 
+                      format_currency(civ_bonus_monthly),
+                      format_currency(civ_rsu_monthly)],
+                textposition='auto',
+            )
+        ])
+        civ_chart.update_layout(
+            height=300,
+            margin=dict(l=0, r=0, t=0, b=0),
+            yaxis_title="Monthly $ (After Tax)",
+            showlegend=False
         )
-    ])
-    civ_chart.update_layout(
-        height=300,
-        margin=dict(l=0, r=0, t=0, b=0),
-        yaxis_title="Monthly $ (After Tax)",
-        showlegend=False
-    )
-    st.plotly_chart(civ_chart, use_container_width=True)
+        st.plotly_chart(civ_chart, use_container_width=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-st.markdown("### 📈 4-Year Wealth Projection")
-st.markdown("<p style='color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem;'>Visualizing the 1-Year Cliff Trap</p>", unsafe_allow_html=True)
+with st.container(border=True):
+    st.markdown("### 📈 4-Year Wealth Projection")
+    st.markdown("<p style='color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem;'>Visualizing the 1-Year Cliff Trap</p>", unsafe_allow_html=True)
 
-if total_equity > 0:
-    equity_calc = calculate_rsu_value(total_equity, vesting_years, 0, is_public)
-    vesting_schedule_detail = calculate_vesting_schedule(total_equity, vesting_years, 12, is_public)
-    
-    cumulative_equity = {}
-    cumulative = 0
-    for year in range(5):
-        if year == 0:
-            cumulative_equity[year] = 0
-        else:
-            cumulative += vesting_schedule_detail.get(year, {}).get('vested_this_year', 0)
-            cumulative_equity[year] = cumulative
-else:
-    cumulative_equity = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
+    if total_equity > 0:
+        equity_calc = calculate_rsu_value(total_equity, vesting_years, 0, is_public)
+        vesting_schedule_detail = calculate_vesting_schedule(total_equity, vesting_years, 12, is_public)
+        
+        cumulative_equity = {}
+        cumulative = 0
+        for year in range(5):
+            if year == 0:
+                cumulative_equity[year] = 0
+            else:
+                cumulative += vesting_schedule_detail.get(year, {}).get('vested_this_year', 0)
+                cumulative_equity[year] = cumulative
+    else:
+        cumulative_equity = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
 
-tsp_match = mil_results['base_pay_monthly'] * 0.05 * 12
+    tsp_match = mil_results['base_pay_monthly'] * 0.05 * 12
 
-wealth_fig = render_wealth_chart(
-    mil_annual_net=mil_results['total_monthly'] * 12,
-    civ_annual_net=civ_results['net_monthly'] * 12,
-    equity_vesting_schedule=cumulative_equity,
-    tsp_match_annual=tsp_match
-)
+    wealth_fig = render_wealth_chart(
+        mil_annual_net=mil_results['total_monthly'] * 12,
+        civ_annual_net=civ_results['net_monthly'] * 12,
+        equity_vesting_schedule=cumulative_equity,
+        tsp_match_annual=tsp_match
+    )
 
-st.plotly_chart(wealth_fig, use_container_width=True)
+    st.plotly_chart(wealth_fig, use_container_width=True)
 
 col_4yr1, col_4yr2 = st.columns(2)
 with col_4yr1:
