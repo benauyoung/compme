@@ -105,14 +105,13 @@ st.markdown("""
         color: #94a3b8;
     }
     
-    /* Border around tabs section */
-    .st-fl {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 0.75rem;
-        border: 2px solid #1e3a5f;
-        box-shadow: 0 4px 12px rgba(30, 58, 95, 0.15);
-        margin: 1.5rem 0;
+    /* Metric centering (mobile + desktop readability) */
+    [data-testid="stMetric"] {
+        text-align: center;
+    }
+    
+    [data-testid="stMetric"] [data-testid="stMetricLabel"] {
+        justify-content: center;
     }
     
     .input-card {
@@ -449,70 +448,72 @@ with tab_tax:
     st.markdown(f"**Military Tax Advantage:** ${format_currency(mil_results['tax_advantage_monthly'])}/month")
 
 st.markdown("<br><br>", unsafe_allow_html=True)
-st.markdown("### Compensation Breakdown")
 
-# Month-to-Month and Year-to-Year Comparison
-comp_tab1, comp_tab2 = st.tabs(["📅 Monthly Comparison", "📆 Yearly Comparison"])
-
-with comp_tab1:
-    col_m1, col_m2, col_m3 = st.columns(3)
-    with col_m1:
-        st.metric(
-            "🪖 Military Monthly",
-            format_currency(mil_results['total_monthly']),
-            help="Tax-advantaged compensation (BAH/BAS not taxed)"
-        )
-    with col_m2:
-        st.metric(
-            "💼 Civilian Monthly (After Tax)",
-            format_currency(civ_results['net_monthly']),
-            help="Take-home pay after federal, state, and FICA taxes"
-        )
-    with col_m3:
-        delta_monthly = mil_results['total_monthly'] - civ_results['net_monthly']
-        st.metric(
-            "📊 Monthly Delta",
-            format_delta(delta_monthly),
-            delta=delta_monthly,
-            delta_color="normal"
-        )
-
-with comp_tab2:
-    mil_annual = mil_results['total_monthly'] * 12
-    civ_annual = civ_results['net_monthly'] * 12
+with st.container(border=True):
+    st.markdown("### Compensation Breakdown")
     
-    # Add annual bonus for civilian
-    if bonus_pct > 0:
-        annual_bonus_amount = base_salary * (bonus_pct / 100)
-        # Estimate ~40% tax on bonus
-        civ_annual += annual_bonus_amount * 0.6
+    # Month-to-Month and Year-to-Year Comparison
+    comp_tab1, comp_tab2 = st.tabs(["📅 Monthly Comparison", "📆 Yearly Comparison"])
     
-    # Add annual equity vesting if applicable
-    if total_equity > 0:
-        civ_annual += annual_rsu
+    with comp_tab1:
+        col_m1, col_m2, col_m3 = st.columns(3)
+        with col_m1:
+            st.metric(
+                "🪖 Military Monthly",
+                format_currency(mil_results['total_monthly']),
+                help="Tax-advantaged compensation (BAH/BAS not taxed)"
+            )
+        with col_m2:
+            st.metric(
+                "💼 Civilian Monthly (After Tax)",
+                format_currency(civ_results['net_monthly']),
+                help="Take-home pay after federal, state, and FICA taxes"
+            )
+        with col_m3:
+            delta_monthly = mil_results['total_monthly'] - civ_results['net_monthly']
+            st.metric(
+                "📊 Monthly Delta",
+                format_delta(delta_monthly),
+                delta=delta_monthly,
+                delta_color="normal"
+            )
     
-    delta_annual = mil_annual - civ_annual
-    
-    col_y1, col_y2, col_y3 = st.columns(3)
-    with col_y1:
-        st.metric(
-            "🪖 Military Annual",
-            format_currency(mil_annual),
-            help="Monthly compensation × 12 (excludes TSP match)"
-        )
-    with col_y2:
-        st.metric(
-            "💼 Civilian Annual (After Tax)",
-            format_currency(civ_annual),
-            help="Includes after-tax bonus and annual equity vesting"
-        )
-    with col_y3:
-        st.metric(
-            "📊 Annual Delta",
-            format_delta(delta_annual),
-            delta=delta_annual,
-            delta_color="normal"
-        )
+    with comp_tab2:
+        mil_annual = mil_results['total_monthly'] * 12
+        civ_annual = civ_results['net_monthly'] * 12
+        
+        # Add annual bonus for civilian
+        if bonus_pct > 0:
+            annual_bonus_amount = base_salary * (bonus_pct / 100)
+            # Estimate ~40% tax on bonus
+            civ_annual += annual_bonus_amount * 0.6
+        
+        # Add annual equity vesting if applicable
+        if total_equity > 0:
+            civ_annual += annual_rsu
+        
+        delta_annual = mil_annual - civ_annual
+        
+        col_y1, col_y2, col_y3 = st.columns(3)
+        with col_y1:
+            st.metric(
+                "🪖 Military Annual",
+                format_currency(mil_annual),
+                help="Monthly compensation × 12 (excludes TSP match)"
+            )
+        with col_y2:
+            st.metric(
+                "💼 Civilian Annual (After Tax)",
+                format_currency(civ_annual),
+                help="Includes after-tax bonus and annual equity vesting"
+            )
+        with col_y3:
+            st.metric(
+                "📊 Annual Delta",
+                format_delta(delta_annual),
+                delta=delta_annual,
+                delta_color="normal"
+            )
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -598,13 +599,14 @@ with st.container(border=True):
 
     st.plotly_chart(wealth_fig, use_container_width=True)
 
-col_4yr1, col_4yr2 = st.columns(2)
-with col_4yr1:
-    mil_4yr = mil_results['total_monthly'] * 48 + (tsp_match * 4)
-    st.metric("🪖 Military 4-Year Total", format_currency(mil_4yr))
-with col_4yr2:
-    civ_4yr = civ_results['net_monthly'] * 48 + cumulative_equity.get(4, 0)
-    st.metric("💼 Civilian 4-Year Total", format_currency(civ_4yr))
+with st.container(border=True):
+    col_4yr1, col_4yr2 = st.columns(2)
+    with col_4yr1:
+        mil_4yr = mil_results['total_monthly'] * 48 + (tsp_match * 4)
+        st.metric("🪖 Military 4-Year Total", format_currency(mil_4yr))
+    with col_4yr2:
+        civ_4yr = civ_results['net_monthly'] * 48 + cumulative_equity.get(4, 0)
+        st.metric("💼 Civilian 4-Year Total", format_currency(civ_4yr))
 
 if cumulative_equity.get(1, 0) == 0 and total_equity > 0:
     st.warning("⚠️ **1-Year Cliff Alert**: No equity vests in Year 1. You're working the first year for base compensation only!")
