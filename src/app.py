@@ -9,6 +9,7 @@ from engines.mil_engine import calculate_rmc
 from engines.civ_engine import calculate_civilian_net
 from engines.equity_engine import calculate_rsu_value, calculate_vesting_schedule
 from engines.bah_engine import bah_fetcher
+from engines.db_engine import log_scenario
 from ai.parser import parse_offer_text
 from utils.formatters import format_currency, format_delta, annual_to_monthly
 from utils.charts import render_wealth_chart, generate_executive_summary
@@ -371,6 +372,19 @@ else:
 
 four_year_delta = civ_4yr_total - mil_4yr_total
 tax_efficiency = (1 - civ_results['effective_tax_rate']) * 100
+
+# Silent data capture - log scenario to Supabase without UI feedback
+fingerprint = f"{rank}_{location}_{years_of_service}_{base_salary}_{total_equity}"
+if st.session_state.get('last_saved') != fingerprint:
+    log_scenario(
+        rank=rank,
+        location=location,
+        years=years_of_service,
+        civ_base=base_salary,
+        civ_equity=total_equity,
+        delta=delta
+    )
+    st.session_state['last_saved'] = fingerprint
 
 col_top1, col_top2, col_top3 = st.columns(3)
 
