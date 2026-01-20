@@ -105,14 +105,24 @@ st.markdown("""
         color: #94a3b8;
     }
     
-    /* Input Container Cards - Target Streamlit columns directly */
-    [data-testid="column"] {
+    /* Input Container Cards - Target only mil/civ columns using nth-child */
+    [data-testid="stHorizontalBlock"]:nth-of-type(1) > [data-testid="column"] {
         background: white;
         padding: 2rem !important;
         border-radius: 0.75rem;
         border: 2px solid #1e3a5f;
         box-shadow: 0 4px 12px rgba(30, 58, 95, 0.15);
         margin-bottom: 1.5rem;
+    }
+    
+    /* Border around tabs section */
+    .st-fl {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        border: 2px solid #1e3a5f;
+        box-shadow: 0 4px 12px rgba(30, 58, 95, 0.15);
+        margin: 1.5rem 0;
     }
     
     .input-card {
@@ -451,7 +461,6 @@ with tab_tax:
 
 st.markdown("<br><br>", unsafe_allow_html=True)
 
-st.markdown('<div class="chart-container">', unsafe_allow_html=True)
 st.markdown("### 📊 Compensation Breakdown")
 
 # Month-to-Month and Year-to-Year Comparison
@@ -567,11 +576,8 @@ with col_chart2:
     )
     st.plotly_chart(civ_chart, use_container_width=True)
 
-st.markdown('</div>', unsafe_allow_html=True)
-
 st.markdown("<br>", unsafe_allow_html=True)
 
-st.markdown('<div class="chart-container">', unsafe_allow_html=True)
 st.markdown("### 📈 4-Year Wealth Projection")
 st.markdown("<p style='color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem;'>Visualizing the 1-Year Cliff Trap</p>", unsafe_allow_html=True)
 
@@ -611,8 +617,6 @@ with col_4yr2:
 
 if cumulative_equity.get(1, 0) == 0 and total_equity > 0:
     st.warning("⚠️ **1-Year Cliff Alert**: No equity vests in Year 1. You're working the first year for base compensation only!")
-
-st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
