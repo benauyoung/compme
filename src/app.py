@@ -188,7 +188,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-with st.expander("🪄 AI Offer Parser", expanded=False):
+with st.expander("Enter Offer Letter", expanded=False):
     offer_text = st.text_area(
         "Offer Letter Text",
         height=150,
