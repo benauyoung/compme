@@ -439,23 +439,29 @@ with tab_delta:
     st.metric(
         "Monthly Delta",
         format_delta(delta),
-        delta=delta,
-        delta_color="normal",
         help=f"{winner} Advantage"
     )
-    st.write(f"**Military Monthly:** {format_currency(mil_results['total_monthly'])}")
-    st.write(f"**Civilian Monthly (After Tax):** {format_currency(civ_results['net_monthly'])}")
+    
+    col_m1, col_m2 = st.columns(2)
+    with col_m1:
+        st.write(f"**Military Monthly:** {format_currency(mil_results['total_monthly'])}")
+    with col_m2:
+        st.write(f"**Civilian Monthly (After Tax):** {format_currency(civ_results['net_monthly'])}")
 
 with tab_4yr:
     st.metric(
         "4-Year Upside",
         format_delta(four_year_delta),
-        delta=four_year_delta,
-        delta_color="normal",
         help="Cumulative Wealth Difference"
     )
-    st.write(f"**Military 4-Year Total:** {format_currency(mil_4yr_total)}")
-    st.write(f"**Civilian 4-Year Total:** {format_currency(civ_4yr_total)}")
+    
+    col_4y1, col_4y2 = st.columns(2)
+    with col_4y1:
+        st.markdown(f"### Military 4-Year Total")
+        st.markdown(f"## {format_currency(mil_4yr_total)}")
+    with col_4y2:
+        st.markdown(f"### Civilian 4-Year Total")
+        st.markdown(f"## {format_currency(civ_4yr_total)}")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
