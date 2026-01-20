@@ -427,6 +427,35 @@ with col_chart2:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
+# Mobile-optimized: Use tabs instead of 3 columns
+with st.container(border=True):
+    tab_delta, tab_4yr = st.tabs(["Monthly Delta", "4-Year Total"])
+
+with tab_delta:
+    winner = "Military" if delta > 0 else "Civilian"
+    st.metric(
+        "Monthly Delta",
+        format_delta(delta),
+        delta=delta,
+        delta_color="normal",
+        help=f"{winner} Advantage"
+    )
+    st.write(f"**Military Monthly:** {format_currency(mil_results['total_monthly'])}")
+    st.write(f"**Civilian Monthly (After Tax):** {format_currency(civ_results['net_monthly'])}")
+
+with tab_4yr:
+    st.metric(
+        "4-Year Upside",
+        format_delta(four_year_delta),
+        delta=four_year_delta,
+        delta_color="normal",
+        help="Cumulative Wealth Difference"
+    )
+    st.write(f"**Military 4-Year Total:** {format_currency(mil_4yr_total)}")
+    st.write(f"**Civilian 4-Year Total:** {format_currency(civ_4yr_total)}")
+
+st.markdown("<br>", unsafe_allow_html=True)
+
 with st.container(border=True):
     st.subheader("4-Year Wealth Projection")
     st.caption("Visualizing the 1-Year Cliff Trap")
