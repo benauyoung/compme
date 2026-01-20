@@ -241,7 +241,10 @@ with col_mil:
         
         has_dependents = st.checkbox("Have Dependents?", value=False)
         
-        filing_status_mil = st.radio("Tax Filing", ["Single", "Married"], key="mil_filing", horizontal=True)
+        st.markdown("---")
+        
+        # Military Bonus (optional special pays, retention bonuses, etc)
+        mil_annual_bonus = st.number_input("Annual Bonus/Special Pay ($)", min_value=0, max_value=100000, value=0, step=1000, help="Retention bonus, flight pay, hazard pay, etc.")
         
         st.markdown("---")
         
@@ -327,7 +330,20 @@ with col_civ:
         
         base_salary = st.number_input("Base Salary (Annual)", min_value=0, max_value=500000, value=default_base, step=5000)
         
+        sign_on_bonus = st.number_input("Sign-On Bonus ($)", min_value=0, max_value=200000, value=0, step=5000, help="One-time signing bonus")
+        
         bonus_pct = st.slider("Annual Bonus Target (%)", min_value=0, max_value=100, value=default_bonus_pct)
+        
+        civ_state = st.selectbox(
+            "State of Residence",
+            ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL",
+             "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME",
+             "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH",
+             "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI",
+             "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"],
+            index=45,
+            help="No income tax: AK, FL, NV, SD, TN, TX, WA, WY | Highest rates: CA, HI, NY, NJ"
+        )
         
         with st.expander("Equity Package", expanded=default_equity > 0):
             total_equity = st.number_input("Total Equity Grant ($)", min_value=0, max_value=5000000, value=default_equity, step=10000)
@@ -344,24 +360,23 @@ with col_civ:
                 if equity_calc['risk_discount'] > 0:
                     st.warning(f"Applied {equity_calc['risk_discount']:.0f}% risk discount: ${format_currency(equity_calc['adjusted_value'])} adjusted value")
 
-# Civilian state and tax filing in sidebar for mobile optimization (MUST be before civ_results)
-st.sidebar.markdown("---")
-st.sidebar.markdown("### Civilian Tax Settings")
+# Tax Filing Settings - shared section below inputs
+st.markdown("<br>", unsafe_allow_html=True)
 
-state_options = [
-    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL",
-    "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME",
-    "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH",
-    "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI",
-    "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
-]
-state = st.sidebar.selectbox(
-    "State of Residence",
-    state_options,
-    help="No income tax: AK, FL, NV, SD, TN, TX, WA, WY | Highest rates: CA, HI, NY, NJ"
-)
+with st.container(border=True):
+    st.markdown("### Tax Filing Settings")
+    col_tax1, col_tax2 = st.columns(2)
+    
+    with col_tax1:
+        st.markdown("**Military Tax Filing**")
+        filing_status_mil = st.radio("Filing Status", ["Single", "Married"], key="mil_filing", horizontal=True, label_visibility="collapsed")
+    
+    with col_tax2:
+        st.markdown("**Civilian Tax Filing**")
+        filing_status_civ = st.radio("Filing Status", ["Single", "Married"], key="civ_filing", horizontal=True, label_visibility="collapsed")
 
-filing_status_civ = st.sidebar.radio("Tax Filing", ["Single", "Married"], key="civ_filing")
+# Use civ_state as state variable
+state = civ_state
 
 # Calculate civilian results AFTER state and filing_status_civ are defined
 if total_equity > 0:
