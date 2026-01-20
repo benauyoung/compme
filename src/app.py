@@ -17,7 +17,7 @@ from utils.charts import render_wealth_chart, generate_executive_summary
 
 st.set_page_config(
     page_title="CompMe - Military vs Civilian Compensation",
-    page_icon="💰",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -196,7 +196,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-with st.expander("📄 Enter Offer Letter", expanded=False):
+with st.expander("Enter Offer Letter", expanded=False):
     st.caption("Paste your full offer letter - AI will extract all compensation details")
     offer_text = st.text_area(
         "Offer Letter Text",
@@ -205,19 +205,19 @@ with st.expander("📄 Enter Offer Letter", expanded=False):
         label_visibility="collapsed"
     )
     
-    parse_button = st.button("📋 Parse Offer", use_container_width=True, type="primary")
+    parse_button = st.button("Parse Offer", use_container_width=True, type="primary")
     
     if parse_button and offer_text:
-        with st.spinner("🤖 AI analyzing your offer letter..."):
+        with st.spinner("Analyzing your offer letter..."):
             parsed = parse_offer_text(offer_text)
             st.session_state['parsed_data'] = parsed
             
             if parsed['parse_method'] == 'ai':
-                st.success(f"✅ AI Parser extracted {len(parsed['extracted_fields'])} fields (confidence: {parsed['parsing_confidence']:.0%})")
+                st.success(f"AI Parser extracted {len(parsed['extracted_fields'])} fields (confidence: {parsed['parsing_confidence']:.0%})")
             else:
-                st.info(f"ℹ️ Using pattern matching - extracted {len(parsed['extracted_fields'])} fields")
+                st.info(f"Using pattern matching - extracted {len(parsed['extracted_fields'])} fields")
             
-            with st.expander("📋 View Parsed Data", expanded=False):
+            with st.expander("View Parsed Data", expanded=False):
                 st.json(parsed)
 
 if 'parsed_data' not in st.session_state:
@@ -229,7 +229,7 @@ col_mil, col_civ = st.columns(2)
 
 with col_mil:
     with st.container(border=True):
-        st.markdown('<div class="input-card-header">🪖 Military Compensation</div>', unsafe_allow_html=True)
+        st.markdown('<div class="input-card-header">Military Compensation</div>', unsafe_allow_html=True)
         
         rank_options = [
             "E-1", "E-2", "E-3", "E-4", "E-5", "E-6", "E-7", "E-8", "E-9",
@@ -259,14 +259,14 @@ with col_mil:
         default_idx = all_locations.index(default_location) if default_location in all_locations else 0
         
         location = st.selectbox(
-            "📍 Select Duty Station",
+            "Select Duty Station",
             options=all_locations,
             index=default_idx,
             help="Official 2026 BAH rates for all duty stations"
         )
         
         # Optional manual override in expander for mobile
-        with st.expander("✏️ Manual BAH Override", expanded=False):
+        with st.expander("Manual BAH Override", expanded=False):
             st.caption("Override official BAH data with custom amount")
             manual_override = st.checkbox("Enable Manual Override", value=False)
             
@@ -293,19 +293,19 @@ with col_mil:
         # Display BAH with source badge
         bah_source = mil_results.get('bah_source', 'official_2026')
         if bah_source == 'manual':
-            badge_html = '<span style="background: #3b82f6; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">🔵 USER OVERRIDE</span>'
+            badge_html = '<span style="background: #3b82f6; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">USER OVERRIDE</span>'
         elif bah_source == 'official_2026':
-            badge_html = '<span style="background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">🟢 OFFICIAL 2026 DATA</span>'
+            badge_html = '<span style="background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">OFFICIAL 2026 DATA</span>'
         elif bah_source == 'not_found':
-            badge_html = '<span style="background: #ef4444; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">🔴 NOT FOUND - USE MANUAL ENTRY</span>'
+            badge_html = '<span style="background: #ef4444; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">NOT FOUND - USE MANUAL ENTRY</span>'
         else:
-            badge_html = '<span style="background: #6b7280; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">⚫ UNKNOWN SOURCE</span>'
+            badge_html = '<span style="background: #6b7280; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">UNKNOWN SOURCE</span>'
         
         st.markdown(f"**BAH:** {format_currency(mil_results['bah_monthly'])} {badge_html}", unsafe_allow_html=True)
 
 with col_civ:
     with st.container(border=True):
-        st.markdown('<div class="input-card-header">💼 Civilian Offer</div>', unsafe_allow_html=True)
+        st.markdown('<div class="input-card-header">Civilian Offer</div>', unsafe_allow_html=True)
         
         parsed = st.session_state.get('parsed_data')
         
@@ -324,7 +324,7 @@ with col_civ:
         
         bonus_pct = st.slider("Annual Bonus Target (%)", min_value=0, max_value=100, value=default_bonus_pct)
         
-        with st.expander("📈 Equity Package", expanded=default_equity > 0):
+        with st.expander("Equity Package", expanded=default_equity > 0):
             total_equity = st.number_input("Total Equity Grant ($)", min_value=0, max_value=5000000, value=default_equity, step=10000)
             
             col_eq1, col_eq2 = st.columns(2)
@@ -335,13 +335,13 @@ with col_civ:
             
             if total_equity > 0:
                 equity_calc = calculate_rsu_value(total_equity, vesting_years, 0, is_public)
-                st.info(f"💡 {equity_calc['liquidity_note']}")
+                st.info(f"{equity_calc['liquidity_note']}")
                 if equity_calc['risk_discount'] > 0:
-                    st.warning(f"⚠️ Applied {equity_calc['risk_discount']:.0f}% risk discount: ${format_currency(equity_calc['adjusted_value'])} adjusted value")
+                    st.warning(f"Applied {equity_calc['risk_discount']:.0f}% risk discount: ${format_currency(equity_calc['adjusted_value'])} adjusted value")
 
 # Civilian state and tax filing in sidebar for mobile optimization (MUST be before civ_results)
 st.sidebar.markdown("---")
-st.sidebar.markdown("### 💼 Civilian Tax Settings")
+st.sidebar.markdown("### Civilian Tax Settings")
 
 state_options = [
     "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL",
@@ -353,7 +353,7 @@ state_options = [
 state = st.sidebar.selectbox(
     "State of Residence",
     state_options,
-    help="✅ No income tax: AK, FL, NV, SD, TN, TX, WA, WY | 📊 Highest rates: CA, HI, NY, NJ"
+    help="No income tax: AK, FL, NV, SD, TN, TX, WA, WY | Highest rates: CA, HI, NY, NJ"
 )
 
 filing_status_civ = st.sidebar.radio("Tax Filing", ["Single", "Married"], key="civ_filing")
@@ -406,15 +406,15 @@ if st.session_state.get('last_saved') != fingerprint:
     st.session_state['last_saved'] = fingerprint
 
 # Mobile-optimized: Use tabs instead of 3 columns
-tab_delta, tab_4yr, tab_tax = st.tabs(["📊 Monthly Delta", "💰 4-Year Total", "🎯 Tax Efficiency"])
+with st.container(border=True):
+    tab_delta, tab_4yr, tab_tax = st.tabs(["Monthly Delta", "4-Year Total", "Tax Efficiency"])
 
 with tab_delta:
     delta_class = "positive" if delta > 0 else "negative"
-    delta_icon = "📈" if delta > 0 else "📉"
     winner = "Military" if delta > 0 else "Civilian"
     st.markdown(f"""
         <div class="top-metric-card">
-            <div class="top-metric-label">{delta_icon} Monthly Delta</div>
+            <div class="top-metric-label">Monthly Delta</div>
             <div class="top-metric-value {delta_class}">{format_delta(delta)}</div>
             <div class="top-metric-subtitle">{winner} Advantage</div>
         </div>
@@ -424,10 +424,9 @@ with tab_delta:
 
 with tab_4yr:
     upside_class = "positive" if four_year_delta > 0 else "negative"
-    upside_icon = "💰" if four_year_delta > 0 else "⚖️"
     st.markdown(f"""
         <div class="top-metric-card">
-            <div class="top-metric-label">{upside_icon} 4-Year Upside</div>
+            <div class="top-metric-label">4-Year Upside</div>
             <div class="top-metric-value {upside_class}">{format_delta(four_year_delta)}</div>
             <div class="top-metric-subtitle">Cumulative Wealth Difference</div>
         </div>
@@ -436,10 +435,9 @@ with tab_4yr:
     st.markdown(f"**Civilian 4-Year Total:** {format_currency(civ_4yr_total)}")
 
 with tab_tax:
-    efficiency_icon = "🎯"
     st.markdown(f"""
         <div class="top-metric-card">
-            <div class="top-metric-label">{efficiency_icon} Tax Efficiency</div>
+            <div class="top-metric-label">Tax Efficiency</div>
             <div class="top-metric-value">{tax_efficiency:.1f}%</div>
             <div class="top-metric-subtitle">After-Tax Retention (Civilian)</div>
         </div>
@@ -453,26 +451,26 @@ with st.container(border=True):
     st.markdown("### Compensation Breakdown")
     
     # Month-to-Month and Year-to-Year Comparison
-    comp_tab1, comp_tab2 = st.tabs(["📅 Monthly Comparison", "📆 Yearly Comparison"])
+    comp_tab1, comp_tab2 = st.tabs(["Monthly Comparison", "Yearly Comparison"])
     
     with comp_tab1:
         col_m1, col_m2, col_m3 = st.columns(3)
         with col_m1:
             st.metric(
-                "🪖 Military Monthly",
+                "Military Monthly",
                 format_currency(mil_results['total_monthly']),
                 help="Tax-advantaged compensation (BAH/BAS not taxed)"
             )
         with col_m2:
             st.metric(
-                "💼 Civilian Monthly (After Tax)",
+                "Civilian Monthly (After Tax)",
                 format_currency(civ_results['net_monthly']),
                 help="Take-home pay after federal, state, and FICA taxes"
             )
         with col_m3:
             delta_monthly = mil_results['total_monthly'] - civ_results['net_monthly']
             st.metric(
-                "📊 Monthly Delta",
+                "Monthly Delta",
                 format_delta(delta_monthly),
                 delta=delta_monthly,
                 delta_color="normal"
@@ -497,19 +495,19 @@ with st.container(border=True):
         col_y1, col_y2, col_y3 = st.columns(3)
         with col_y1:
             st.metric(
-                "🪖 Military Annual",
+                "Military Annual",
                 format_currency(mil_annual),
                 help="Monthly compensation × 12 (excludes TSP match)"
             )
         with col_y2:
             st.metric(
-                "💼 Civilian Annual (After Tax)",
+                "Civilian Annual (After Tax)",
                 format_currency(civ_annual),
                 help="Includes after-tax bonus and annual equity vesting"
             )
         with col_y3:
             st.metric(
-                "📊 Annual Delta",
+                "Annual Delta",
                 format_delta(delta_annual),
                 delta=delta_annual,
                 delta_color="normal"
@@ -521,7 +519,7 @@ col_chart1, col_chart2 = st.columns(2)
 
 with col_chart1:
     with st.container(border=True):
-        st.markdown("#### 🪖 Military Breakdown")
+        st.markdown("#### Military Breakdown")
         mil_chart = go.Figure(data=[
             go.Bar(
                 x=['Base Pay', 'BAH', 'BAS'],
@@ -543,7 +541,7 @@ with col_chart1:
 
 with col_chart2:
     with st.container(border=True):
-        st.markdown("#### 💼 Civilian Breakdown")
+        st.markdown("#### Civilian Breakdown")
         civ_base_monthly = base_salary / 12
         civ_bonus_monthly = civ_results['bonus_net'] / 12
         civ_rsu_monthly = civ_results.get('rsu_net', 0) / 12
@@ -570,7 +568,7 @@ with col_chart2:
 st.markdown("<br>", unsafe_allow_html=True)
 
 with st.container(border=True):
-    st.markdown("### 📈 4-Year Wealth Projection")
+    st.markdown("### 4-Year Wealth Projection")
     st.markdown("<p style='color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem;'>Visualizing the 1-Year Cliff Trap</p>", unsafe_allow_html=True)
 
     if total_equity > 0:
@@ -603,17 +601,17 @@ with st.container(border=True):
     col_4yr1, col_4yr2 = st.columns(2)
     with col_4yr1:
         mil_4yr = mil_results['total_monthly'] * 48 + (tsp_match * 4)
-        st.metric("🪖 Military 4-Year Total", format_currency(mil_4yr))
+        st.metric("Military 4-Year Total", format_currency(mil_4yr))
     with col_4yr2:
         civ_4yr = civ_results['net_monthly'] * 48 + cumulative_equity.get(4, 0)
-        st.metric("💼 Civilian 4-Year Total", format_currency(civ_4yr))
+        st.metric("Civilian 4-Year Total", format_currency(civ_4yr))
 
 if cumulative_equity.get(1, 0) == 0 and total_equity > 0:
-    st.warning("⚠️ **1-Year Cliff Alert**: No equity vests in Year 1. You're working the first year for base compensation only!")
+    st.warning("**1-Year Cliff Alert**: No equity vests in Year 1. You're working the first year for base compensation only!")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-with st.expander("ℹ️ About the Tax Advantage"):
+with st.expander("About the Tax Advantage"):
     st.markdown("""
     ### Why Military Pay Goes Further
     
@@ -629,12 +627,12 @@ with st.expander("ℹ️ About the Tax Advantage"):
     """)
 
 
-st.sidebar.markdown("## ⚙️ Settings")
+st.sidebar.markdown("## Settings")
 st.sidebar.markdown("**Version:** 3.0.0 (Sprint 3 - Pro UI)")
-st.sidebar.markdown("**Status:** ✅ Professional Dashboard")
+st.sidebar.markdown("**Status:** Professional Dashboard")
 st.sidebar.markdown("---")
 
-if st.sidebar.button("📋 Share Scenario", use_container_width=True, type="primary"):
+if st.sidebar.button("Share Scenario", use_container_width=True, type="primary"):
     if total_equity > 0:
         equity_calc_summary = calculate_rsu_value(total_equity, vesting_years, 0, is_public)
     else:
@@ -649,19 +647,19 @@ if st.sidebar.button("📋 Share Scenario", use_container_width=True, type="prim
         total_equity=total_equity
     )
     
-    st.sidebar.markdown("### 📄 Executive Summary")
+    st.sidebar.markdown("### Executive Summary")
     st.sidebar.markdown(exec_summary)
     st.sidebar.markdown("---")
-    st.sidebar.info("💡 Copy the text above to share with advisors, family, or forums.")
+    st.sidebar.info("Copy the text above to share with advisors, family, or forums.")
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("### 🚀 Roadmap")
-st.sidebar.markdown("- ✅ Sprint 1: Core Logic")
-st.sidebar.markdown("- ✅ Sprint 2: AI Parser + Equity")
-st.sidebar.markdown("- ✅ Sprint 3: Wealth Horizon")
-st.sidebar.markdown("- ⏳ Sprint 4: Smart BAH Lookup")
+st.sidebar.markdown("### Roadmap")
+st.sidebar.markdown("- Sprint 1: Core Logic")
+st.sidebar.markdown("- Sprint 2: AI Parser + Equity")
+st.sidebar.markdown("- Sprint 3: Wealth Horizon")
+st.sidebar.markdown("- Sprint 4: Smart BAH Lookup")
 st.sidebar.markdown("---")
-st.sidebar.markdown("### 📊 Data Coverage")
+st.sidebar.markdown("### Data Coverage")
 st.sidebar.markdown("**BAH Bases:** 15 locations")
 st.sidebar.markdown("- 6 Army bases")
 st.sidebar.markdown("- 5 Navy bases")
