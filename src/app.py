@@ -105,16 +105,6 @@ st.markdown("""
         color: #94a3b8;
     }
     
-    /* Input Container Cards - Target stVerticalBlock within first row columns */
-    [data-testid="stHorizontalBlock"]:first-child [data-testid="column"] [data-testid="stVerticalBlock"] {
-        background: white;
-        padding: 2rem;
-        border-radius: 0.75rem;
-        border: 2px solid #1e3a5f;
-        box-shadow: 0 4px 12px rgba(30, 58, 95, 0.15);
-        margin-bottom: 1.5rem;
-    }
-    
     /* Border around tabs section */
     .st-fl {
         background: white;
@@ -249,114 +239,116 @@ st.markdown("<br>", unsafe_allow_html=True)
 col_mil, col_civ = st.columns(2)
 
 with col_mil:
-    st.markdown('<div class="input-card-header">🪖 Military Compensation</div>', unsafe_allow_html=True)
-    
-    rank_options = [
-        "E-1", "E-2", "E-3", "E-4", "E-5", "E-6", "E-7", "E-8", "E-9",
-        "O-1", "O-2", "O-3", "O-4", "O-5", "O-6"
-    ]
-    rank = st.selectbox("Rank", rank_options, index=5)
-    
-    years_of_service = st.slider("Years of Service", min_value=0, max_value=30, value=6)
-    
-    has_dependents = st.checkbox("Have Dependents?", value=False)
-    
-    filing_status_mil = st.radio("Tax Filing", ["Single", "Married"], key="mil_filing", horizontal=True)
-    
-    st.markdown("---")
-    
-    # Duty Station Dropdown
-    all_locations = bah_fetcher.get_all_locations()
-    
-    # Set default to Norfolk or San Diego if available
-    default_location = "NORFOLK/PORTSMOUTH, VA"
-    if default_location not in all_locations and len(all_locations) > 0:
-        # Try San Diego
-        default_location = "SAN DIEGO, CA"
-        if default_location not in all_locations:
-            default_location = all_locations[0]
-    
-    default_idx = all_locations.index(default_location) if default_location in all_locations else 0
-    
-    location = st.selectbox(
-        "📍 Select Duty Station",
-        options=all_locations,
-        index=default_idx,
-        help="Official 2026 BAH rates for all duty stations"
-    )
-    
-    # Optional manual override in expander for mobile
-    with st.expander("✏️ Manual BAH Override", expanded=False):
-        st.caption("Override official BAH data with custom amount")
-        manual_override = st.checkbox("Enable Manual Override", value=False)
+    with st.container(border=True):
+        st.markdown('<div class="input-card-header">🪖 Military Compensation</div>', unsafe_allow_html=True)
         
-        if manual_override:
-            manual_bah = st.number_input(
-                "Monthly BAH Amount ($)",
-                min_value=0,
-                max_value=10000,
-                value=2000,
-                step=50
-            )
+        rank_options = [
+            "E-1", "E-2", "E-3", "E-4", "E-5", "E-6", "E-7", "E-8", "E-9",
+            "O-1", "O-2", "O-3", "O-4", "O-5", "O-6"
+        ]
+        rank = st.selectbox("Rank", rank_options, index=5)
+        
+        years_of_service = st.slider("Years of Service", min_value=0, max_value=30, value=6)
+        
+        has_dependents = st.checkbox("Have Dependents?", value=False)
+        
+        filing_status_mil = st.radio("Tax Filing", ["Single", "Married"], key="mil_filing", horizontal=True)
+        
+        st.markdown("---")
+        
+        # Duty Station Dropdown
+        all_locations = bah_fetcher.get_all_locations()
+        
+        # Set default to Norfolk or San Diego if available
+        default_location = "NORFOLK/PORTSMOUTH, VA"
+        if default_location not in all_locations and len(all_locations) > 0:
+            # Try San Diego
+            default_location = "SAN DIEGO, CA"
+            if default_location not in all_locations:
+                default_location = all_locations[0]
+        
+        default_idx = all_locations.index(default_location) if default_location in all_locations else 0
+        
+        location = st.selectbox(
+            "📍 Select Duty Station",
+            options=all_locations,
+            index=default_idx,
+            help="Official 2026 BAH rates for all duty stations"
+        )
+        
+        # Optional manual override in expander for mobile
+        with st.expander("✏️ Manual BAH Override", expanded=False):
+            st.caption("Override official BAH data with custom amount")
+            manual_override = st.checkbox("Enable Manual Override", value=False)
+            
+            if manual_override:
+                manual_bah = st.number_input(
+                    "Monthly BAH Amount ($)",
+                    min_value=0,
+                    max_value=10000,
+                    value=2000,
+                    step=50
+                )
+            else:
+                manual_bah = None
+        
+        mil_results = calculate_rmc(
+            rank=rank,
+            years_of_service=years_of_service,
+            location=location,
+            has_dependents=has_dependents,
+            filing_status=filing_status_mil.lower(),
+            manual_bah=manual_bah
+        )
+        
+        # Display BAH with source badge
+        bah_source = mil_results.get('bah_source', 'official_2026')
+        if bah_source == 'manual':
+            badge_html = '<span style="background: #3b82f6; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">🔵 USER OVERRIDE</span>'
+        elif bah_source == 'official_2026':
+            badge_html = '<span style="background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">🟢 OFFICIAL 2026 DATA</span>'
+        elif bah_source == 'not_found':
+            badge_html = '<span style="background: #ef4444; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">🔴 NOT FOUND - USE MANUAL ENTRY</span>'
         else:
-            manual_bah = None
-    
-    mil_results = calculate_rmc(
-        rank=rank,
-        years_of_service=years_of_service,
-        location=location,
-        has_dependents=has_dependents,
-        filing_status=filing_status_mil.lower(),
-        manual_bah=manual_bah
-    )
-    
-    # Display BAH with source badge
-    bah_source = mil_results.get('bah_source', 'official_2026')
-    if bah_source == 'manual':
-        badge_html = '<span style="background: #3b82f6; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">🔵 USER OVERRIDE</span>'
-    elif bah_source == 'official_2026':
-        badge_html = '<span style="background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">🟢 OFFICIAL 2026 DATA</span>'
-    elif bah_source == 'not_found':
-        badge_html = '<span style="background: #ef4444; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">🔴 NOT FOUND - USE MANUAL ENTRY</span>'
-    else:
-        badge_html = '<span style="background: #6b7280; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">⚫ UNKNOWN SOURCE</span>'
-    
-    st.markdown(f"**BAH:** {format_currency(mil_results['bah_monthly'])} {badge_html}", unsafe_allow_html=True)
-    
+            badge_html = '<span style="background: #6b7280; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">⚫ UNKNOWN SOURCE</span>'
+        
+        st.markdown(f"**BAH:** {format_currency(mil_results['bah_monthly'])} {badge_html}", unsafe_allow_html=True)
+
 with col_civ:
-    st.markdown('<div class="input-card-header">💼 Civilian Offer</div>', unsafe_allow_html=True)
-    
-    parsed = st.session_state.get('parsed_data')
-    
-    if parsed:
-        default_base = int(parsed.get('base_salary', 100000))
-        default_bonus_pct = int(parsed.get('annual_bonus_percent', 15))
-        default_equity = int(parsed.get('equity_grant', 0))
-        default_public = parsed.get('is_public_company', True)
-    else:
-        default_base = 100000
-        default_bonus_pct = 15
-        default_equity = 0
-        default_public = True
-    
-    base_salary = st.number_input("Base Salary (Annual)", min_value=0, max_value=500000, value=default_base, step=5000)
-    
-    bonus_pct = st.slider("Annual Bonus Target (%)", min_value=0, max_value=100, value=default_bonus_pct)
-    
-    with st.expander("📈 Equity Package", expanded=default_equity > 0):
-        total_equity = st.number_input("Total Equity Grant ($)", min_value=0, max_value=5000000, value=default_equity, step=10000)
+    with st.container(border=True):
+        st.markdown('<div class="input-card-header">💼 Civilian Offer</div>', unsafe_allow_html=True)
         
-        col_eq1, col_eq2 = st.columns(2)
-        with col_eq1:
-            vesting_years = st.number_input("Vesting Years", min_value=1, max_value=6, value=4)
-        with col_eq2:
-            is_public = st.checkbox("Public Company?", value=default_public, help="Private companies get 50% risk discount")
+        parsed = st.session_state.get('parsed_data')
         
-        if total_equity > 0:
-            equity_calc = calculate_rsu_value(total_equity, vesting_years, 0, is_public)
-            st.info(f"💡 {equity_calc['liquidity_note']}")
-            if equity_calc['risk_discount'] > 0:
-                st.warning(f"⚠️ Applied {equity_calc['risk_discount']:.0f}% risk discount: ${format_currency(equity_calc['adjusted_value'])} adjusted value")
+        if parsed:
+            default_base = int(parsed.get('base_salary', 100000))
+            default_bonus_pct = int(parsed.get('annual_bonus_percent', 15))
+            default_equity = int(parsed.get('equity_grant', 0))
+            default_public = parsed.get('is_public_company', True)
+        else:
+            default_base = 100000
+            default_bonus_pct = 15
+            default_equity = 0
+            default_public = True
+        
+        base_salary = st.number_input("Base Salary (Annual)", min_value=0, max_value=500000, value=default_base, step=5000)
+        
+        bonus_pct = st.slider("Annual Bonus Target (%)", min_value=0, max_value=100, value=default_bonus_pct)
+        
+        with st.expander("📈 Equity Package", expanded=default_equity > 0):
+            total_equity = st.number_input("Total Equity Grant ($)", min_value=0, max_value=5000000, value=default_equity, step=10000)
+            
+            col_eq1, col_eq2 = st.columns(2)
+            with col_eq1:
+                vesting_years = st.number_input("Vesting Years", min_value=1, max_value=6, value=4)
+            with col_eq2:
+                is_public = st.checkbox("Public Company?", value=default_public, help="Private companies get 50% risk discount")
+            
+            if total_equity > 0:
+                equity_calc = calculate_rsu_value(total_equity, vesting_years, 0, is_public)
+                st.info(f"💡 {equity_calc['liquidity_note']}")
+                if equity_calc['risk_discount'] > 0:
+                    st.warning(f"⚠️ Applied {equity_calc['risk_discount']:.0f}% risk discount: ${format_currency(equity_calc['adjusted_value'])} adjusted value")
 
 # Civilian state and tax filing in sidebar for mobile optimization (MUST be before civ_results)
 st.sidebar.markdown("---")
@@ -378,21 +370,20 @@ state = st.sidebar.selectbox(
 filing_status_civ = st.sidebar.radio("Tax Filing", ["Single", "Married"], key="civ_filing")
 
 # Calculate civilian results AFTER state and filing_status_civ are defined
-with col_civ:
-    if total_equity > 0:
-        equity_calc = calculate_rsu_value(total_equity, vesting_years, 0, is_public)
-        annual_rsu = equity_calc['annualized_value']
-    else:
-        annual_rsu = 0
-    
-    civ_results = calculate_civilian_net(
-        base_salary=base_salary,
-        bonus_pct=bonus_pct,
-        total_equity=total_equity,
-        state=state,
-        filing_status=filing_status_civ.lower(),
-        annual_rsu_value=annual_rsu
-    )
+if total_equity > 0:
+    equity_calc = calculate_rsu_value(total_equity, vesting_years, 0, is_public)
+    annual_rsu = equity_calc['annualized_value']
+else:
+    annual_rsu = 0
+
+civ_results = calculate_civilian_net(
+    base_salary=base_salary,
+    bonus_pct=bonus_pct,
+    total_equity=total_equity,
+    state=state,
+    filing_status=filing_status_civ.lower(),
+    annual_rsu_value=annual_rsu
+)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
