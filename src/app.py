@@ -30,167 +30,16 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Professional Financial Dashboard Styling */
     .main {
         background-color: #f8f9fa;
     }
     
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: 700;
-        text-align: center;
-        color: #1e3a5f;
-        margin-bottom: 0.25rem;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-    
-    .verified-badge {
-        display: inline-block;
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-        padding: 0.4rem 1rem;
-        border-radius: 2rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-        margin-left: 1rem;
-        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
-    }
-    
-    .sub-header {
-        font-size: 1rem;
-        text-align: center;
-        color: #64748b;
-        margin-bottom: 2rem;
-        font-weight: 400;
-    }
-    
-    /* Top-Level Metric Cards */
-    .top-metric-card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 0.75rem;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        text-align: center;
-    }
-    
-    .top-metric-label {
-        font-size: 0.875rem;
-        color: #64748b;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 0.5rem;
-    }
-    
-    .top-metric-value {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0.5rem 0;
-    }
-    
-    .top-metric-value.positive {
+    .positive {
         color: #10b981;
     }
     
-    .top-metric-value.negative {
+    .negative {
         color: #ef4444;
-    }
-    
-    .top-metric-subtitle {
-        font-size: 0.75rem;
-        color: #94a3b8;
-    }
-    
-    /* Metric centering (mobile + desktop readability) */
-    [data-testid="stMetric"] {
-        text-align: center;
-    }
-    
-    [data-testid="stMetric"] [data-testid="stMetricLabel"] {
-        justify-content: center;
-    }
-    
-    .input-card {
-        background: transparent;
-        padding: 0;
-        border: none;
-        box-shadow: none;
-        margin-bottom: 1.5rem;
-    }
-    
-    .input-card-header {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #1e3a5f;
-        margin-bottom: 1.5rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 2px solid #e2e8f0;
-    }
-    
-    /* Streamlit Metric Override */
-    [data-testid="stMetricValue"] {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: #1e293b;
-    }
-    
-    /* Delta Metric Card */
-    .delta-card {
-        background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
-        padding: 2rem;
-        border-radius: 0.75rem;
-        text-align: center;
-        color: white;
-        box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3);
-    }
-    
-    .delta-label {
-        font-size: 0.875rem;
-        opacity: 0.9;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 0.5rem;
-    }
-    
-    .delta-value {
-        font-size: 3rem;
-        font-weight: 700;
-        margin: 1rem 0;
-    }
-    
-    .delta-subtitle {
-        font-size: 1rem;
-        opacity: 0.85;
-    }
-    
-    /* Chart Container */
-    .chart-container {
-        background: white;
-        padding: 2rem;
-        border-radius: 0.75rem;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        margin: 1.5rem 0;
-    }
-    
-    /* Professional Button Styling */
-    .stButton > button {
-        background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
-        color: white;
-        border: none;
-        border-radius: 0.5rem;
-        padding: 0.75rem 1.5rem;
-        font-weight: 600;
-        box-shadow: 0 2px 4px rgba(30, 58, 95, 0.2);
-    }
-    
-    .stButton > button:hover {
-        box-shadow: 0 4px 8px rgba(30, 58, 95, 0.3);
-        transform: translateY(-1px);
     }
     </style>
 """, unsafe_allow_html=True)
@@ -382,24 +231,42 @@ civ_results = calculate_civilian_net(
     annual_rsu_value=annual_rsu
 )
 
-with st.container(border=True):
-    st.markdown("### Tax and Bonus Details")
-    
-    bonus_gross = civ_results.get('bonus_annual', 0)
-    bonus_net = civ_results.get('bonus_net', 0)
-    state_tax_annual = civ_results.get('state_tax', 0)
-    state_tax_rate = civ_results.get('state_effective_rate', 0) * 100
-    
-    col_t1, col_t2, col_t3 = st.columns(3)
-    with col_t1:
-        st.metric("Annual Bonus (Gross)", format_currency(bonus_gross))
-        st.metric("Annual Bonus (Net)", format_currency(bonus_net))
-    with col_t2:
-        st.metric("State Tax (Annual)", format_currency(state_tax_annual))
-        st.metric("State Tax Rate (Effective)", f"{state_tax_rate:.2f}%")
-    with col_t3:
-        st.metric("Federal Tax (Annual)", format_currency(civ_results.get('fed_tax', 0)))
-        st.metric("FICA (Annual)", format_currency(civ_results.get('fica_tax', 0)))
+col_details1, col_details2 = st.columns(2)
+
+with col_details1:
+    with st.container(border=True):
+        st.markdown("### Military Tax and Bonus Details")
+        
+        mil_bonus_annual = mil_annual_bonus
+        mil_fed_tax = mil_results.get('fed_tax', 0)
+        mil_fica_tax = mil_results.get('fica_tax', 0)
+        
+        col_m1, col_m2 = st.columns(2)
+        with col_m1:
+            st.metric("Annual Bonus", format_currency(mil_bonus_annual))
+            st.metric("Federal Tax (Annual)", format_currency(mil_fed_tax))
+        with col_m2:
+            st.metric("FICA (Annual)", format_currency(mil_fica_tax))
+            st.metric("State Tax", "$0 (Tax-Free BAH/BAS)")
+
+with col_details2:
+    with st.container(border=True):
+        st.markdown("### Civilian Tax and Bonus Details")
+        
+        bonus_gross = civ_results.get('bonus_annual', 0)
+        bonus_net = civ_results.get('bonus_net', 0)
+        state_tax_annual = civ_results.get('state_tax', 0)
+        state_tax_rate = civ_results.get('state_effective_rate', 0) * 100
+        
+        col_c1, col_c2 = st.columns(2)
+        with col_c1:
+            st.metric("Annual Bonus (Gross)", format_currency(bonus_gross))
+            st.metric("Annual Bonus (Net)", format_currency(bonus_net))
+            st.metric("State Tax (Annual)", format_currency(state_tax_annual))
+        with col_c2:
+            st.metric("State Tax Rate", f"{state_tax_rate:.2f}%")
+            st.metric("Federal Tax (Annual)", format_currency(civ_results.get('fed_tax', 0)))
+            st.metric("FICA (Annual)", format_currency(civ_results.get('fica_tax', 0)))
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -434,7 +301,7 @@ if st.session_state.get('last_saved') != fingerprint:
 
 # Mobile-optimized: Use tabs instead of 3 columns
 with st.container(border=True):
-    tab_delta, tab_4yr, tab_tax = st.tabs(["Monthly Delta", "4-Year Total", "Tax Efficiency"])
+    tab_delta, tab_4yr = st.tabs(["Monthly Delta", "4-Year Total"])
 
 with tab_delta:
     delta_class = "positive" if delta > 0 else "negative"
@@ -461,16 +328,6 @@ with tab_4yr:
     st.markdown(f"**Military 4-Year Total:** {format_currency(mil_4yr_total)}")
     st.markdown(f"**Civilian 4-Year Total:** {format_currency(civ_4yr_total)}")
 
-with tab_tax:
-    st.markdown(f"""
-        <div class="top-metric-card">
-            <div class="top-metric-label">Tax Efficiency</div>
-            <div class="top-metric-value">{tax_efficiency:.1f}%</div>
-            <div class="top-metric-subtitle">After-Tax Retention (Civilian)</div>
-        </div>
-    """, unsafe_allow_html=True)
-    st.markdown(f"**Effective Tax Rate:** {civ_results['effective_tax_rate']*100:.1f}%")
-    st.markdown(f"**Military Tax Advantage:** ${format_currency(mil_results['tax_advantage_monthly'])}/month")
 
 st.markdown("<br><br>", unsafe_allow_html=True)
 
