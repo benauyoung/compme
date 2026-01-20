@@ -42,10 +42,13 @@ st.markdown("""
         color: #ef4444;
     }
     
-    /* Make tax and bonus detail metrics smaller */
-    div[data-testid="column"]:has(> div > div > p:contains("Military Tax and Bonus Details")) [data-testid="stMetricValue"],
-    div[data-testid="column"]:has(> div > div > p:contains("Civilian Tax and Bonus Details")) [data-testid="stMetricValue"] {
-        font-size: 1.2rem !important;
+    /* Make tax and bonus detail metrics smaller - reduce all metric values globally */
+    [data-testid="stMetricValue"] {
+        font-size: 0.9rem !important;
+    }
+    
+    [data-testid="stMetricLabel"] {
+        font-size: 0.75rem !important;
     }
     </style>
 """, unsafe_allow_html=True)
