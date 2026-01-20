@@ -233,7 +233,7 @@ with col_mil:
     
     has_dependents = st.checkbox("Have Dependents?", value=False)
     
-    filing_status_mil = st.radio("Filing Status", ["Single", "Married"], key="mil_filing", horizontal=True)
+    filing_status_mil = st.radio("Tax Filing", ["Single", "Married"], key="mil_filing", horizontal=True)
     
     st.markdown("---")
     
@@ -349,7 +349,7 @@ with col_civ:
         annual_rsu_value=annual_rsu
     )
 
-# Civilian state and filing status in sidebar for mobile optimization
+# Civilian state and tax filing in sidebar for mobile optimization
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 💼 Civilian Tax Settings")
 
@@ -366,7 +366,7 @@ state = st.sidebar.selectbox(
     help="✅ No income tax: AK, FL, NV, SD, TN, TX, WA, WY | 📊 Highest rates: CA, HI, NY, NJ"
 )
 
-filing_status_civ = st.sidebar.radio("Filing Status", ["Single", "Married"], key="civ_filing")
+filing_status_civ = st.sidebar.radio("Tax Filing", ["Single", "Married"], key="civ_filing")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -445,6 +445,71 @@ st.markdown("<br><br>", unsafe_allow_html=True)
 
 st.markdown('<div class="chart-container">', unsafe_allow_html=True)
 st.markdown("### 📊 Compensation Breakdown")
+
+# Month-to-Month and Year-to-Year Comparison
+comp_tab1, comp_tab2 = st.tabs(["📅 Monthly Comparison", "📆 Yearly Comparison"])
+
+with comp_tab1:
+    col_m1, col_m2, col_m3 = st.columns(3)
+    with col_m1:
+        st.metric(
+            "🪖 Military Monthly",
+            format_currency(mil_results['total_monthly']),
+            help="Tax-advantaged compensation (BAH/BAS not taxed)"
+        )
+    with col_m2:
+        st.metric(
+            "💼 Civilian Monthly (After Tax)",
+            format_currency(civ_results['net_monthly']),
+            help="Take-home pay after federal, state, and FICA taxes"
+        )
+    with col_m3:
+        delta_monthly = mil_results['total_monthly'] - civ_results['net_monthly']
+        st.metric(
+            "📊 Monthly Delta",
+            format_delta(delta_monthly),
+            delta=delta_monthly,
+            delta_color="normal"
+        )
+
+with comp_tab2:
+    mil_annual = mil_results['total_monthly'] * 12
+    civ_annual = civ_results['net_monthly'] * 12
+    
+    # Add annual bonus for civilian
+    if bonus_pct > 0:
+        annual_bonus_amount = base_salary * (bonus_pct / 100)
+        # Estimate ~40% tax on bonus
+        civ_annual += annual_bonus_amount * 0.6
+    
+    # Add annual equity vesting if applicable
+    if total_equity > 0:
+        civ_annual += annual_rsu
+    
+    delta_annual = mil_annual - civ_annual
+    
+    col_y1, col_y2, col_y3 = st.columns(3)
+    with col_y1:
+        st.metric(
+            "🪖 Military Annual",
+            format_currency(mil_annual),
+            help="Monthly compensation × 12 (excludes TSP match)"
+        )
+    with col_y2:
+        st.metric(
+            "💼 Civilian Annual (After Tax)",
+            format_currency(civ_annual),
+            help="Includes after-tax bonus and annual equity vesting"
+        )
+    with col_y3:
+        st.metric(
+            "📊 Annual Delta",
+            format_delta(delta_annual),
+            delta=delta_annual,
+            delta_color="normal"
+        )
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 col_chart1, col_chart2 = st.columns(2)
 
