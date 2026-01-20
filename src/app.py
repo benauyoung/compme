@@ -189,15 +189,16 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-with st.expander("Enter Offer Letter", expanded=False):
+with st.expander("📄 Enter Offer Letter", expanded=False):
+    st.caption("Paste your full offer letter - AI will extract all compensation details")
     offer_text = st.text_area(
         "Offer Letter Text",
-        height=150,
+        height=200,
         placeholder="Paste your entire offer letter here - OpenAI will extract the details automatically!\n\nExample:\nBase Salary: $120,000\nSign-on Bonus: $10,000\nAnnual Bonus: 15%\nEquity Grant: $100,000 in RSUs vesting over 4 years",
         label_visibility="collapsed"
     )
     
-    parse_button = st.button("📋 Enter Offer", use_container_width=True, type="primary")
+    parse_button = st.button("📋 Parse Offer", use_container_width=True, type="primary")
     
     if parse_button and offer_text:
         with st.spinner("🤖 AI analyzing your offer letter..."):
@@ -256,19 +257,21 @@ with col_mil:
         help="Official 2026 BAH rates for all duty stations"
     )
     
-    # Optional manual override
-    manual_override = st.checkbox("✏️ Manual BAH Override", value=False, help="Override with custom BAH amount")
-    
-    if manual_override:
-        manual_bah = st.number_input(
-            "Monthly BAH Amount ($)",
-            min_value=0,
-            max_value=10000,
-            value=2000,
-            step=50
-        )
-    else:
-        manual_bah = None
+    # Optional manual override in expander for mobile
+    with st.expander("✏️ Manual BAH Override", expanded=False):
+        st.caption("Override official BAH data with custom amount")
+        manual_override = st.checkbox("Enable Manual Override", value=False)
+        
+        if manual_override:
+            manual_bah = st.number_input(
+                "Monthly BAH Amount ($)",
+                min_value=0,
+                max_value=10000,
+                value=2000,
+                step=50
+            )
+        else:
+            manual_bah = None
     
     st.markdown('</div>', unsafe_allow_html=True)
     
@@ -329,21 +332,6 @@ with col_civ:
             if equity_calc['risk_discount'] > 0:
                 st.warning(f"⚠️ Applied {equity_calc['risk_discount']:.0f}% risk discount: ${format_currency(equity_calc['adjusted_value'])} adjusted value")
     
-    state_options = [
-        "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL",
-        "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME",
-        "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH",
-        "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI",
-        "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
-    ]
-    state = st.selectbox(
-        "State",
-        state_options,
-        help="✅ No income tax: AK, FL, NV, SD, TN, TX, WA, WY | 📊 Highest rates: CA, HI, NY, NJ"
-    )
-    
-    filing_status_civ = st.radio("Filing Status", ["Single", "Married"], key="civ_filing", horizontal=True)
-    
     st.markdown('</div>', unsafe_allow_html=True)
     
     if total_equity > 0:
@@ -360,6 +348,25 @@ with col_civ:
         filing_status=filing_status_civ.lower(),
         annual_rsu_value=annual_rsu
     )
+
+# Civilian state and filing status in sidebar for mobile optimization
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 💼 Civilian Tax Settings")
+
+state_options = [
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL",
+    "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME",
+    "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH",
+    "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI",
+    "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
+]
+state = st.sidebar.selectbox(
+    "State of Residence",
+    state_options,
+    help="✅ No income tax: AK, FL, NV, SD, TN, TX, WA, WY | 📊 Highest rates: CA, HI, NY, NJ"
+)
+
+filing_status_civ = st.sidebar.radio("Filing Status", ["Single", "Married"], key="civ_filing")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -378,7 +385,8 @@ tax_efficiency = (1 - civ_results['effective_tax_rate']) * 100
 fingerprint = f"{rank}_{location}_{years_of_service}_{base_salary}_{total_equity}"
 if st.session_state.get('last_saved') != fingerprint:
     # Get offer letter text if it was submitted
-    submitted_offer = st.session_state.get('parsed_data', {}).get('raw_text', '')
+    parsed_data = st.session_state.get('parsed_data')
+    submitted_offer = parsed_data.get('raw_text', '') if parsed_data and isinstance(parsed_data, dict) else ''
     
     log_scenario(
         rank=rank,
@@ -391,9 +399,10 @@ if st.session_state.get('last_saved') != fingerprint:
     )
     st.session_state['last_saved'] = fingerprint
 
-col_top1, col_top2, col_top3 = st.columns(3)
+# Mobile-optimized: Use tabs instead of 3 columns
+tab_delta, tab_4yr, tab_tax = st.tabs(["📊 Monthly Delta", "💰 4-Year Total", "🎯 Tax Efficiency"])
 
-with col_top1:
+with tab_delta:
     delta_class = "positive" if delta > 0 else "negative"
     delta_icon = "📈" if delta > 0 else "📉"
     winner = "Military" if delta > 0 else "Civilian"
@@ -404,8 +413,10 @@ with col_top1:
             <div class="top-metric-subtitle">{winner} Advantage</div>
         </div>
     """, unsafe_allow_html=True)
+    st.markdown(f"**Military Monthly:** {format_currency(mil_results['total_monthly'])}")
+    st.markdown(f"**Civilian Monthly (After Tax):** {format_currency(civ_results['net_monthly'])}")
 
-with col_top2:
+with tab_4yr:
     upside_class = "positive" if four_year_delta > 0 else "negative"
     upside_icon = "💰" if four_year_delta > 0 else "⚖️"
     st.markdown(f"""
@@ -415,8 +426,10 @@ with col_top2:
             <div class="top-metric-subtitle">Cumulative Wealth Difference</div>
         </div>
     """, unsafe_allow_html=True)
+    st.markdown(f"**Military 4-Year Total:** {format_currency(mil_4yr_total)}")
+    st.markdown(f"**Civilian 4-Year Total:** {format_currency(civ_4yr_total)}")
 
-with col_top3:
+with tab_tax:
     efficiency_icon = "🎯"
     st.markdown(f"""
         <div class="top-metric-card">
@@ -425,6 +438,8 @@ with col_top3:
             <div class="top-metric-subtitle">After-Tax Retention (Civilian)</div>
         </div>
     """, unsafe_allow_html=True)
+    st.markdown(f"**Effective Tax Rate:** {civ_results['effective_tax_rate']*100:.1f}%")
+    st.markdown(f"**Military Tax Advantage:** ${format_currency(mil_results['tax_advantage_monthly'])}/month")
 
 st.markdown("<br><br>", unsafe_allow_html=True)
 
