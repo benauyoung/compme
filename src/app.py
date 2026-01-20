@@ -125,6 +125,16 @@ st.markdown("""
         margin: 1.5rem 0;
     }
     
+    /* Border around Compensation Breakdown section */
+    .comp-breakdown-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 0.75rem;
+        border: 2px solid #1e3a5f;
+        box-shadow: 0 4px 12px rgba(30, 58, 95, 0.15);
+        margin: 1.5rem 0;
+    }
+    
     .input-card {
         background: transparent;
         padding: 0;
@@ -459,7 +469,8 @@ with tab_tax:
 
 st.markdown("<br><br>", unsafe_allow_html=True)
 
-st.markdown("### 📊 Compensation Breakdown")
+st.markdown('<div class="comp-breakdown-container">', unsafe_allow_html=True)
+st.markdown("### Compensation Breakdown")
 
 # Month-to-Month and Year-to-Year Comparison
 comp_tab1, comp_tab2 = st.tabs(["📅 Monthly Comparison", "📆 Yearly Comparison"])
@@ -523,6 +534,8 @@ with comp_tab2:
             delta=delta_annual,
             delta_color="normal"
         )
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
