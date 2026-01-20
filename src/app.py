@@ -283,28 +283,6 @@ with col_mil:
                 )
             else:
                 manual_bah = None
-        
-        mil_results = calculate_rmc(
-            rank=rank,
-            years_of_service=years_of_service,
-            location=location,
-            has_dependents=has_dependents,
-            filing_status=filing_status_mil.lower(),
-            manual_bah=manual_bah
-        )
-        
-        # Display BAH with source badge
-        bah_source = mil_results.get('bah_source', 'official_2026')
-        if bah_source == 'manual':
-            badge_html = '<span style="background: #3b82f6; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">USER OVERRIDE</span>'
-        elif bah_source == 'official_2026':
-            badge_html = '<span style="background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">OFFICIAL 2026 DATA</span>'
-        elif bah_source == 'not_found':
-            badge_html = '<span style="background: #ef4444; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">NOT FOUND - USE MANUAL ENTRY</span>'
-        else:
-            badge_html = '<span style="background: #6b7280; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">UNKNOWN SOURCE</span>'
-        
-        st.markdown(f"**BAH:** {format_currency(mil_results['bah_monthly'])} {badge_html}", unsafe_allow_html=True)
 
 with col_civ:
     with st.container(border=True):
@@ -377,6 +355,16 @@ with st.container(border=True):
 
 # Use civ_state as state variable
 state = civ_state
+
+# Calculate military results AFTER filing_status_mil is defined
+mil_results = calculate_rmc(
+    rank=rank,
+    years_of_service=years_of_service,
+    location=location,
+    has_dependents=has_dependents,
+    filing_status=filing_status_mil.lower(),
+    manual_bah=manual_bah
+)
 
 # Calculate civilian results AFTER state and filing_status_civ are defined
 if total_equity > 0:
