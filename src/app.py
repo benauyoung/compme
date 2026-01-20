@@ -273,8 +273,6 @@ with col_mil:
         else:
             manual_bah = None
     
-    st.markdown('</div>', unsafe_allow_html=True)
-    
     mil_results = calculate_rmc(
         rank=rank,
         years_of_service=years_of_service,
@@ -296,6 +294,8 @@ with col_mil:
         badge_html = '<span style="background: #6b7280; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">⚫ UNKNOWN SOURCE</span>'
     
     st.markdown(f"**BAH:** {format_currency(mil_results['bah_monthly'])} {badge_html}", unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
 with col_civ:
     st.markdown('<div class="input-card"><div class="input-card-header">💼 Civilian Offer</div>', unsafe_allow_html=True)
@@ -332,7 +332,8 @@ with col_civ:
             if equity_calc['risk_discount'] > 0:
                 st.warning(f"⚠️ Applied {equity_calc['risk_discount']:.0f}% risk discount: ${format_currency(equity_calc['adjusted_value'])} adjusted value")
     
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Closing div moved to end of civilian section after calculations
+    # (will be added after civ_results calculation)
 
 # Civilian state and tax filing in sidebar for mobile optimization (MUST be before civ_results)
 st.sidebar.markdown("---")
@@ -369,6 +370,8 @@ with col_civ:
         filing_status=filing_status_civ.lower(),
         annual_rsu_value=annual_rsu
     )
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
