@@ -209,7 +209,8 @@ with st.expander("Enter Offer Letter", expanded=False):
             else:
                 st.info(f"ℹ️ Using pattern matching - extracted {len(parsed['extracted_fields'])} fields")
             
-            st.json(parsed)
+            with st.expander("📋 View Parsed Data", expanded=False):
+                st.json(parsed)
 
 if 'parsed_data' not in st.session_state:
     st.session_state['parsed_data'] = None
