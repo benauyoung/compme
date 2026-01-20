@@ -50,6 +50,12 @@ st.markdown("""
     [data-testid="stMetricLabel"] {
         font-size: 0.75rem !important;
     }
+    
+    /* Ensure side-by-side bordered containers have equal heights */
+    div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlockBorderWrapper"] {
+        min-height: 100%;
+        height: 100%;
+    }
     </style>
 """, unsafe_allow_html=True)
 
