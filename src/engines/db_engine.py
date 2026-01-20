@@ -1,17 +1,17 @@
 import streamlit as st
-from supabase import create_client, Client
+import httpx
 from typing import Optional
 
 
-def get_supabase_client() -> Optional[Client]:
+def get_supabase_config() -> Optional[tuple[str, str]]:
     """
-    Initialize Supabase client from Streamlit secrets.
-    Returns None if secrets are not configured.
+    Get Supabase configuration from Streamlit secrets.
+    Returns (url, key) tuple or None if not configured.
     """
     try:
         url = st.secrets["supabase"]["url"]
         key = st.secrets["supabase"]["key"]
-        return create_client(url, key)
+        return (url, key)
     except Exception:
         return None
 
@@ -25,7 +25,7 @@ def log_scenario(
     delta: float
 ) -> bool:
     """
-    Silently logs a compensation scenario to Supabase.
+    Silently logs a compensation scenario to Supabase via REST API.
     
     This function captures user inputs without any UI feedback.
     If the database is unavailable or credentials are invalid,
@@ -43,9 +43,12 @@ def log_scenario(
         True if logged successfully, False otherwise (silent failure)
     """
     try:
-        client = get_supabase_client()
-        if client is None:
+        config = get_supabase_config()
+        if config is None:
+            print("❌ DEBUG: Supabase config not found - secrets not configured")
             return False
+        
+        url, key = config
         
         data = {
             'rank': rank,
@@ -56,9 +59,27 @@ def log_scenario(
             'monthly_delta': delta
         }
         
-        client.table('scenarios').insert(data).execute()
-        return True
+        print(f"✅ DEBUG: Attempting to insert: {data}")
         
-    except Exception:
+        # Supabase REST API endpoint
+        endpoint = f"{url}/rest/v1/scenarios"
+        headers = {
+            "apikey": key,
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+            "Prefer": "return=minimal"
+        }
+        
+        response = httpx.post(endpoint, json=data, headers=headers, timeout=5.0)
+        
+        if response.status_code in [200, 201]:
+            print(f"✅ DEBUG: Insert successful! Status: {response.status_code}")
+            return True
+        else:
+            print(f"❌ DEBUG: Insert failed. Status: {response.status_code}, Response: {response.text}")
+            return False
+        
+    except Exception as e:
         # Silent failure - do not crash the app
+        print(f"❌ DEBUG: Error logging scenario: {e}")
         return False
