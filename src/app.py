@@ -105,10 +105,10 @@ st.markdown("""
         color: #94a3b8;
     }
     
-    /* Input Container Cards - Target only mil/civ columns using nth-child */
-    [data-testid="stHorizontalBlock"]:nth-of-type(1) > [data-testid="column"] {
+    /* Input Container Cards - Target custom wrapper divs */
+    .mil-input-wrapper, .civ-input-wrapper {
         background: white;
-        padding: 2rem !important;
+        padding: 2rem;
         border-radius: 0.75rem;
         border: 2px solid #1e3a5f;
         box-shadow: 0 4px 12px rgba(30, 58, 95, 0.15);
@@ -239,6 +239,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 col_mil, col_civ = st.columns(2)
 
 with col_mil:
+    st.markdown('<div class="mil-input-wrapper">', unsafe_allow_html=True)
     st.markdown('<div class="input-card-header">🪖 Military Compensation</div>', unsafe_allow_html=True)
     
     rank_options = [
@@ -312,8 +313,10 @@ with col_mil:
         badge_html = '<span style="background: #6b7280; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">⚫ UNKNOWN SOURCE</span>'
     
     st.markdown(f"**BAH:** {format_currency(mil_results['bah_monthly'])} {badge_html}", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     
 with col_civ:
+    st.markdown('<div class="civ-input-wrapper">', unsafe_allow_html=True)
     st.markdown('<div class="input-card-header">💼 Civilian Offer</div>', unsafe_allow_html=True)
     
     parsed = st.session_state.get('parsed_data')
@@ -348,7 +351,7 @@ with col_civ:
             if equity_calc['risk_discount'] > 0:
                 st.warning(f"⚠️ Applied {equity_calc['risk_discount']:.0f}% risk discount: ${format_currency(equity_calc['adjusted_value'])} adjusted value")
     
-    # No closing div needed - CSS targets column directly
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Civilian state and tax filing in sidebar for mobile optimization (MUST be before civ_results)
 st.sidebar.markdown("---")
