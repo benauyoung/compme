@@ -41,6 +41,12 @@ st.markdown("""
     .negative {
         color: #ef4444;
     }
+    
+    /* Make tax and bonus detail metrics smaller */
+    div[data-testid="column"]:has(> div > div > p:contains("Military Tax and Bonus Details")) [data-testid="stMetricValue"],
+    div[data-testid="column"]:has(> div > div > p:contains("Civilian Tax and Bonus Details")) [data-testid="stMetricValue"] {
+        font-size: 1.2rem !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -78,7 +84,7 @@ col_mil, col_civ = st.columns(2)
 
 with col_mil:
     with st.container(border=True):
-        st.markdown('<div class="input-card-header">Military Compensation</div>', unsafe_allow_html=True)
+        st.subheader("Military Compensation")
         
         rank_options = [
             "E-1", "E-2", "E-3", "E-4", "E-5", "E-6", "E-7", "E-8", "E-9",
@@ -135,7 +141,7 @@ with col_mil:
 
 with col_civ:
     with st.container(border=True):
-        st.markdown('<div class="input-card-header">Civilian Offer</div>', unsafe_allow_html=True)
+        st.subheader("Civilian Offer")
         
         parsed = st.session_state.get('parsed_data')
         
@@ -191,7 +197,7 @@ with col_civ:
 st.markdown("<br>", unsafe_allow_html=True)
 
 with st.container(border=True):
-    st.markdown("### Tax Filing Settings")
+    st.subheader("Tax Filing Settings")
     col_tax1, col_tax2 = st.columns(2)
     
     with col_tax1:
@@ -235,7 +241,7 @@ col_details1, col_details2 = st.columns(2)
 
 with col_details1:
     with st.container(border=True):
-        st.markdown("### Military Tax and Bonus Details")
+        st.subheader("Military Tax and Bonus Details")
         
         mil_bonus_annual = mil_annual_bonus
         mil_fed_tax = mil_results.get('fed_tax', 0)
@@ -251,7 +257,7 @@ with col_details1:
 
 with col_details2:
     with st.container(border=True):
-        st.markdown("### Civilian Tax and Bonus Details")
+        st.subheader("Civilian Tax and Bonus Details")
         
         bonus_gross = civ_results.get('bonus_annual', 0)
         bonus_net = civ_results.get('bonus_net', 0)
@@ -299,40 +305,10 @@ if st.session_state.get('last_saved') != fingerprint:
     )
     st.session_state['last_saved'] = fingerprint
 
-# Mobile-optimized: Use tabs instead of 3 columns
-with st.container(border=True):
-    tab_delta, tab_4yr = st.tabs(["Monthly Delta", "4-Year Total"])
-
-with tab_delta:
-    delta_class = "positive" if delta > 0 else "negative"
-    winner = "Military" if delta > 0 else "Civilian"
-    st.markdown(f"""
-        <div class="top-metric-card">
-            <div class="top-metric-label">Monthly Delta</div>
-            <div class="top-metric-value {delta_class}">{format_delta(delta)}</div>
-            <div class="top-metric-subtitle">{winner} Advantage</div>
-        </div>
-    """, unsafe_allow_html=True)
-    st.markdown(f"**Military Monthly:** {format_currency(mil_results['total_monthly'])}")
-    st.markdown(f"**Civilian Monthly (After Tax):** {format_currency(civ_results['net_monthly'])}")
-
-with tab_4yr:
-    upside_class = "positive" if four_year_delta > 0 else "negative"
-    st.markdown(f"""
-        <div class="top-metric-card">
-            <div class="top-metric-label">4-Year Upside</div>
-            <div class="top-metric-value {upside_class}">{format_delta(four_year_delta)}</div>
-            <div class="top-metric-subtitle">Cumulative Wealth Difference</div>
-        </div>
-    """, unsafe_allow_html=True)
-    st.markdown(f"**Military 4-Year Total:** {format_currency(mil_4yr_total)}")
-    st.markdown(f"**Civilian 4-Year Total:** {format_currency(civ_4yr_total)}")
-
-
 st.markdown("<br><br>", unsafe_allow_html=True)
 
 with st.container(border=True):
-    st.markdown("### Compensation Breakdown")
+    st.subheader("Compensation Breakdown")
     
     # Month-to-Month and Year-to-Year Comparison
     comp_tab1, comp_tab2 = st.tabs(["Monthly Comparison", "Yearly Comparison"])
@@ -452,8 +428,8 @@ with col_chart2:
 st.markdown("<br>", unsafe_allow_html=True)
 
 with st.container(border=True):
-    st.markdown("### 4-Year Wealth Projection")
-    st.markdown("<p style='color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem;'>Visualizing the 1-Year Cliff Trap</p>", unsafe_allow_html=True)
+    st.subheader("4-Year Wealth Projection")
+    st.caption("Visualizing the 1-Year Cliff Trap")
 
     if total_equity > 0:
         equity_calc = calculate_rsu_value(total_equity, vesting_years, 0, is_public)

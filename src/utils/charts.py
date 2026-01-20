@@ -65,7 +65,7 @@ def render_wealth_chart(
             fig.add_annotation(
                 x=year,
                 y=civ_cumulative[year],
-                text=f"💰 ${vested_this_year:,.0f}<br>vests",
+                text=f"${vested_this_year:,.0f}<br>vests",
                 showarrow=True,
                 arrowhead=2,
                 arrowsize=1,
@@ -78,7 +78,7 @@ def render_wealth_chart(
     
     fig.update_layout(
         title={
-            'text': "📊 4-Year Wealth Accumulation: Military vs. Civilian",
+            'text': "4-Year Wealth Accumulation: Military vs. Civilian",
             'x': 0.5,
             'xanchor': 'center',
             'font': {'size': 20, 'color': '#1f2937'}
@@ -113,7 +113,7 @@ def render_wealth_chart(
         fig.add_annotation(
             x=1,
             y=civ_cumulative[1],
-            text="⚠️ 1-Year Cliff<br>No equity yet!",
+            text="1-Year Cliff<br>No equity yet!",
             showarrow=True,
             arrowhead=2,
             arrowsize=1,
@@ -309,13 +309,13 @@ def generate_summary_text(
     
     summary = f"""
 ═══════════════════════════════════════════════════════
-🎯 COMPENSATION COMPARISON SUMMARY
+COMPENSATION COMPARISON SUMMARY
 ═══════════════════════════════════════════════════════
 
-📊 MONTHLY BREAKDOWN
+MONTHLY BREAKDOWN
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🪖 Military ({rank})
+Military ({rank})
    Base Pay:        ${mil_results['base_pay_monthly']:,.0f}
    BAH (Tax-Free):  ${mil_results['bah_monthly']:,.0f}
    BAS (Tax-Free):  ${mil_results['bas_monthly']:,.0f}
@@ -323,14 +323,14 @@ def generate_summary_text(
    ─────────────────────────────────────
    Total Monthly:   ${mil_monthly:,.0f}
 
-💼 Civilian Offer
+Civilian Offer
    Base Salary:     ${base_salary:,.0f}/year
    Monthly Net:     ${civ_monthly:,.0f}
    Annual Equity:   ${equity_calc.get('annualized_value', 0):,.0f}
    ─────────────────────────────────────
    Total Monthly:   ${civ_monthly:,.0f}
 
-🎯 VERDICT
+VERDICT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Monthly Winner:  {winner} (+${delta_abs:,.0f}/month)
@@ -341,9 +341,9 @@ Monthly Winner:  {winner} (+${delta_abs:,.0f}/month)
    ─────────────────────────────────────
    Net Difference:  ${'+' if four_year_delta > 0 else ''}{four_year_delta:,.0f}
 
-{'⚠️  Private Equity Warning: ' + equity_calc['liquidity_note'] if equity_calc.get('risk_discount', 0) > 0 else ''}
+{'Private Equity Warning: ' + equity_calc['liquidity_note'] if equity_calc.get('risk_discount', 0) > 0 else ''}
 
-💡 KEY INSIGHTS
+KEY INSIGHTS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 • Tax Advantage: ${mil_results['tax_advantage_monthly']:,.0f}/month saved by tax-free allowances
