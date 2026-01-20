@@ -376,13 +376,17 @@ tax_efficiency = (1 - civ_results['effective_tax_rate']) * 100
 # Silent data capture - log scenario to Supabase without UI feedback
 fingerprint = f"{rank}_{location}_{years_of_service}_{base_salary}_{total_equity}"
 if st.session_state.get('last_saved') != fingerprint:
+    # Get offer letter text if it was submitted
+    submitted_offer = st.session_state.get('parsed_data', {}).get('raw_text', '')
+    
     log_scenario(
         rank=rank,
         location=location,
         years=years_of_service,
         civ_base=base_salary,
         civ_equity=total_equity,
-        delta=delta
+        delta=delta,
+        offer_text=submitted_offer
     )
     st.session_state['last_saved'] = fingerprint
 

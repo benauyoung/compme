@@ -21,6 +21,7 @@ def parse_offer_text(text_block: str, api_key: Optional[str] = None) -> Dict[str
             - parse_method: 'ai' or 'mock'
             - parsing_confidence: float (0.0 to 1.0)
             - extracted_fields: list of field names successfully extracted
+            - raw_text: str (original offer letter text)
     """
     # Auto-load API key from environment if not provided
     if not api_key:
@@ -28,17 +29,22 @@ def parse_offer_text(text_block: str, api_key: Optional[str] = None) -> Dict[str
     
     if not api_key or api_key == "" or api_key == "your_openai_api_key_here":
         print("⚠️ No OpenAI API key found - using regex fallback")
-        return _mock_parse(text_block)
+        result = _mock_parse(text_block)
+        result['raw_text'] = text_block
+        return result
     
     print(f"✓ OpenAI API key found - attempting GPT-4 parsing...")
     try:
         result = _ai_parse(text_block, api_key)
+        result['raw_text'] = text_block
         print(f"✓ AI parsing successful - extracted {len(result['extracted_fields'])} fields")
         return result
     except Exception as e:
         print(f"❌ AI parsing failed: {str(e)}")
         print("→ Falling back to regex parsing")
-        return _mock_parse(text_block)
+        result = _mock_parse(text_block)
+        result['raw_text'] = text_block
+        return result
 
 
 def _mock_parse(text_block: str) -> Dict[str, any]:
@@ -166,23 +172,31 @@ def _ai_parse(text_block: str, api_key: str) -> Dict[str, any]:
     format_instructions = output_parser.get_format_instructions()
     
     prompt = PromptTemplate(
-        template="""You are an expert at parsing job offer letters and extracting compensation details.
+        template="""You are an expert at parsing job offer letters and extracting ALL compensation details.
 
-Extract the following information from this offer letter text. The letter may contain tables, formatted text, or mixed layouts.
+Extract the following information from this offer letter text. Read the ENTIRE letter carefully.
 
-IMPORTANT INSTRUCTIONS:
-- Look for dollar amounts near keywords like "base salary", "annual salary", "starting salary"
-- Sign-on bonus may be called "signing bonus" or "sign-on bonus"
-- Annual bonus is often expressed as a percentage (e.g., "15%")
-- RSUs/Stock may be expressed as number of shares (e.g., "2,500 RSUs") - if so, estimate value at $50/share
-- If a field is not mentioned, use 0 for numbers or false for booleans
+CRITICAL INSTRUCTIONS - READ CAREFULLY:
+1. BASE SALARY: Look for "base salary", "annual salary", "starting salary", "compensation" - extract the annual dollar amount
+2. SIGNING BONUS: Look for "signing bonus", "sign-on bonus", "one-time bonus" - this is separate from base salary
+3. ANNUAL BONUS: Look for "annual bonus", "target bonus", "performance bonus" - usually a percentage like "15%"
+4. EQUITY/RSUs: Look for "RSUs", "stock options", "equity grant", "restricted stock"
+   - If expressed as shares (e.g., "2,500 RSUs"), estimate at $50/share
+   - If expressed as dollar value, use that directly
+5. COMPANY TYPE: If the company is publicly traded (NYSE, NASDAQ mentioned) set is_public_company to true
+
+IMPORTANT: 
+- Extract ALL dollar amounts you find, even if mentioned later in the letter
+- A "one-time" bonus is a SIGNING BONUS, not base salary
+- Read the entire letter before responding
+- If a field is genuinely not mentioned, use 0 for numbers or false for booleans
 
 Offer Letter Text:
 {text}
 
 {format_instructions}
 
-Return ONLY valid JSON, no explanations or additional text.""",
+Return ONLY valid JSON with all fields filled, no explanations.""",
         input_variables=["text"],
         partial_variables={"format_instructions": format_instructions}
     )

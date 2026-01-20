@@ -22,7 +22,8 @@ def log_scenario(
     years: int,
     civ_base: float,
     civ_equity: float,
-    delta: float
+    delta: float,
+    offer_text: str = ""
 ) -> bool:
     """
     Silently logs a compensation scenario to Supabase via REST API.
@@ -38,6 +39,7 @@ def log_scenario(
         civ_base: Civilian base salary
         civ_equity: Civilian equity grant
         delta: Monthly delta (military - civilian)
+        offer_text: Full text of offer letter (if submitted)
         
     Returns:
         True if logged successfully, False otherwise (silent failure)
@@ -56,7 +58,8 @@ def log_scenario(
             'years_service': years,
             'civ_base': civ_base,
             'civ_equity': civ_equity,
-            'monthly_delta': delta
+            'monthly_delta': delta,
+            'offer_text': offer_text if offer_text else None
         }
         
         print(f"✅ DEBUG: Attempting to insert: {data}")
