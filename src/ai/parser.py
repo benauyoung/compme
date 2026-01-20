@@ -58,6 +58,7 @@ def _mock_parse(text_block: str) -> Dict[str, any]:
         "base_salary": 0,
         "sign_on_bonus": 0,
         "annual_bonus_percent": 0,
+        "annual_bonus_amount": 0,
         "equity_grant": 0,
         "equity_shares": 0,
         "is_public_company": True,
@@ -98,12 +99,29 @@ def _mock_parse(text_block: str) -> Dict[str, any]:
         r'annual bonus[:\s]+([0-9]+)%',
         r'target bonus[:\s]+([0-9]+)%',
         r'bonus target[:\s]+([0-9]+)%',
+        r'incentive target[:\s]+([0-9]+)%',
+        r'performance bonus[:\s]+([0-9]+)%',
     ]
     for pattern in bonus_pct_patterns:
         match = re.search(pattern, text_lower)
         if match:
             result["annual_bonus_percent"] = float(match.group(1))
             result["extracted_fields"].append("annual_bonus_percent")
+            break
+
+    bonus_amt_patterns = [
+        r'annual bonus[:\s]+\$([0-9,]+)',
+        r'target bonus[:\s]+\$([0-9,]+)',
+        r'bonus target[:\s]+\$([0-9,]+)',
+        r'performance bonus[:\s]+\$([0-9,]+)',
+        r'incentive bonus[:\s]+\$([0-9,]+)',
+        r'bonus opportunity[:\s]+\$([0-9,]+)',
+    ]
+    for pattern in bonus_amt_patterns:
+        match = re.search(pattern, text_lower)
+        if match:
+            result["annual_bonus_amount"] = float(match.group(1).replace(',', ''))
+            result["extracted_fields"].append("annual_bonus_amount")
             break
     
     equity_patterns = [
@@ -141,7 +159,7 @@ def _mock_parse(text_block: str) -> Dict[str, any]:
     if "private" in text_lower or "startup" in text_lower:
         result["is_public_company"] = False
     
-    result["parsing_confidence"] = len(result["extracted_fields"]) / 4.0
+    result["parsing_confidence"] = len(result["extracted_fields"]) / 5.0
     
     return result
 
@@ -163,6 +181,7 @@ def _ai_parse(text_block: str, api_key: str) -> Dict[str, any]:
         ResponseSchema(name="base_salary", description="Annual base salary in dollars (number only, no commas or $)"),
         ResponseSchema(name="sign_on_bonus", description="One-time signing bonus in dollars (0 if not mentioned)"),
         ResponseSchema(name="annual_bonus_percent", description="Target annual bonus as percentage (e.g., 15 for 15%)"),
+        ResponseSchema(name="annual_bonus_amount", description="Target annual bonus as a dollar amount (0 if not mentioned)"),
         ResponseSchema(name="equity_grant", description="Total equity grant value in dollars (0 if not mentioned)"),
         ResponseSchema(name="equity_shares", description="Number of RSU/stock shares granted (0 if not mentioned)"),
         ResponseSchema(name="is_public_company", description="true if publicly traded company, false if startup/private"),
@@ -179,7 +198,9 @@ Extract the following information from this offer letter text. Read the ENTIRE l
 CRITICAL INSTRUCTIONS - READ CAREFULLY:
 1. BASE SALARY: Look for "base salary", "annual salary", "starting salary", "compensation" - extract the annual dollar amount
 2. SIGNING BONUS: Look for "signing bonus", "sign-on bonus", "one-time bonus" - this is separate from base salary
-3. ANNUAL BONUS: Look for "annual bonus", "target bonus", "performance bonus" - usually a percentage like "15%"
+3. ANNUAL BONUS: Look for "annual bonus", "target bonus", "performance bonus", "incentive".
+   - If you find a percentage (e.g., "15%"), set annual_bonus_percent.
+   - If you find a dollar amount (e.g., "$20,000"), set annual_bonus_amount.
 4. EQUITY/RSUs: Look for "RSUs", "stock options", "equity grant", "restricted stock"
    - If expressed as shares (e.g., "2,500 RSUs"), estimate at $50/share
    - If expressed as dollar value, use that directly
@@ -217,6 +238,7 @@ Return ONLY valid JSON with all fields filled, no explanations.""",
             "base_salary": float(parsed.get("base_salary", 0)),
             "sign_on_bonus": float(parsed.get("sign_on_bonus", 0)),
             "annual_bonus_percent": float(parsed.get("annual_bonus_percent", 0)),
+            "annual_bonus_amount": float(parsed.get("annual_bonus_amount", 0)),
             "equity_grant": float(parsed.get("equity_grant", 0)),
             "equity_shares": int(parsed.get("equity_shares", 0)),
             "is_public_company": bool(parsed.get("is_public_company", True)),

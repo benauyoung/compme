@@ -373,6 +373,8 @@ def calculate_civilian_net(base_salary: float, bonus_pct: float, total_equity: f
         "gross_annual": gross_annual,
         "base_salary": base_salary,
         "bonus_annual": bonus_annual,
+        "bonus_federal_withholding": bonus_withholding['federal_withholding'],
+        "bonus_fica_withholding": bonus_withholding['fica'],
         "bonus_net": bonus_withholding['net_bonus'],
         "rsu_annual": annual_rsu_value,
         "rsu_net": rsu_net,
@@ -382,5 +384,8 @@ def calculate_civilian_net(base_salary: float, bonus_pct: float, total_equity: f
         "total_tax": total_tax,
         "net_annual": net_annual,
         "net_monthly": net_annual / 12,
-        "effective_tax_rate": (total_tax / gross_annual) if gross_annual > 0 else 0
+        "effective_tax_rate": (total_tax / gross_annual) if gross_annual > 0 else 0,
+        "fed_effective_rate": (fed_tax / gross_annual) if gross_annual > 0 else 0,
+        "state_effective_rate": (state_tax / gross_annual) if gross_annual > 0 else 0,
+        "fica_effective_rate": (fica_tax / gross_annual) if gross_annual > 0 else 0
     }

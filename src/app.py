@@ -311,7 +311,12 @@ with col_civ:
         
         if parsed:
             default_base = int(parsed.get('base_salary', 100000))
-            default_bonus_pct = int(parsed.get('annual_bonus_percent', 15))
+            parsed_bonus_pct = parsed.get('annual_bonus_percent', 0)
+            parsed_bonus_amt = parsed.get('annual_bonus_amount', 0)
+            if (not parsed_bonus_pct or float(parsed_bonus_pct) == 0) and parsed_bonus_amt and default_base > 0:
+                default_bonus_pct = int(round((float(parsed_bonus_amt) / float(default_base)) * 100))
+            else:
+                default_bonus_pct = int(parsed_bonus_pct) if parsed_bonus_pct else 15
             default_equity = int(parsed.get('equity_grant', 0))
             default_public = parsed.get('is_public_company', True)
         else:
@@ -373,6 +378,25 @@ civ_results = calculate_civilian_net(
     filing_status=filing_status_civ.lower(),
     annual_rsu_value=annual_rsu
 )
+
+with st.container(border=True):
+    st.markdown("### Tax and Bonus Details")
+    
+    bonus_gross = civ_results.get('bonus_annual', 0)
+    bonus_net = civ_results.get('bonus_net', 0)
+    state_tax_annual = civ_results.get('state_tax', 0)
+    state_tax_rate = civ_results.get('state_effective_rate', 0) * 100
+    
+    col_t1, col_t2, col_t3 = st.columns(3)
+    with col_t1:
+        st.metric("Annual Bonus (Gross)", format_currency(bonus_gross))
+        st.metric("Annual Bonus (Net)", format_currency(bonus_net))
+    with col_t2:
+        st.metric("State Tax (Annual)", format_currency(state_tax_annual))
+        st.metric("State Tax Rate (Effective)", f"{state_tax_rate:.2f}%")
+    with col_t3:
+        st.metric("Federal Tax (Annual)", format_currency(civ_results.get('fed_tax', 0)))
+        st.metric("FICA (Annual)", format_currency(civ_results.get('fica_tax', 0)))
 
 st.markdown("<br>", unsafe_allow_html=True)
 
