@@ -26,7 +26,8 @@ Reveals the "True Net" difference between Military Compensation (tax-advantaged)
 
 ### 📊 4-Year Wealth Projection
 - **RSU Vesting Schedules** with 1-year cliff modeling
-- **Risk Discounts** for private company equity (50% haircut)
+- **Tiered Risk Discounts** for private company equity:
+  - Public: 0% | Pre-IPO: 15% | Late-stage: 30% | Growth: 50% | Early: 70%
 - **Bonus Withholding** calculations (22% federal supplemental rate)
 - Interactive Plotly charts showing cumulative wealth over time
 
@@ -112,10 +113,18 @@ CompMe/
 │   │   └── tax_brackets_mock.json      # 2025 tax brackets
 │   └── utils/
 │       ├── formatters.py               # Currency formatting
+│       ├── design_system.py            # Neumorphic UI styling
 │       └── charts.py                   # Plotly visualizations
+├── tests/                              # Test suite (179 tests)
+│   ├── conftest.py                     # Shared fixtures
+│   ├── unit/                           # Unit tests
+│   ├── integration/                    # Integration tests
+│   └── data/                           # Data validation tests
 ├── utils/
 │   └── ingest_bah.py                   # Excel → JSON converter
 ├── requirements.txt                    # Python dependencies
+├── requirements-test.txt               # Test dependencies (pytest)
+├── pytest.ini                          # Pytest configuration
 ├── launch.bat                          # Windows one-click launcher
 ├── .gitignore                          # Excludes .env, .venv, Excel files
 └── README.md
@@ -145,6 +154,14 @@ OPENAI_API_KEY=sk-proj-...
 ---
 
 ## 📝 Version History
+
+### V1.1 (Jan 2026) - Calculator Fixes & Testing
+- ✅ Tiered equity risk discounts (Public/Pre-IPO/Late/Growth/Early)
+- ✅ Child Tax Credit support with income phase-out
+- ✅ All 50 states + DC tax brackets (25 states added)
+- ✅ Marginal tax rate calculations for tax advantage
+- ✅ Neumorphic design system
+- ✅ Comprehensive test suite (179 tests, 94%+ engine coverage)
 
 ### V1.0 (Jan 2026) - Production Release
 - ✅ Official 2026 BAH data (338 locations)
