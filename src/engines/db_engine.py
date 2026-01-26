@@ -47,7 +47,7 @@ def log_scenario(
     try:
         config = get_supabase_config()
         if config is None:
-            print("❌ DEBUG: Supabase config not found - secrets not configured")
+            print("[ERROR] DEBUG: Supabase config not found - secrets not configured")
             return False
         
         url, key = config
@@ -62,7 +62,7 @@ def log_scenario(
             'offer_text': offer_text if offer_text else None
         }
         
-        print(f"✅ DEBUG: Attempting to insert: {data}")
+        print(f"[OK] DEBUG: Attempting to insert: {data}")
         
         # Supabase REST API endpoint
         endpoint = f"{url}/rest/v1/scenarios"
@@ -76,7 +76,7 @@ def log_scenario(
         response = httpx.post(endpoint, json=data, headers=headers, timeout=5.0)
         
         if response.status_code in [200, 201]:
-            print(f"✅ DEBUG: Insert successful! Status: {response.status_code}")
+            print(f"[OK] DEBUG: Insert successful! Status: {response.status_code}")
             return True
         else:
             print(f"❌ DEBUG: Insert failed. Status: {response.status_code}, Response: {response.text}")

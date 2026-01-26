@@ -7,12 +7,41 @@ sys.path.append(os.path.dirname(__file__))
 
 from engines.mil_engine import calculate_rmc
 from engines.civ_engine import calculate_civilian_net
-from engines.equity_engine import calculate_rsu_value, calculate_vesting_schedule
+from engines.equity_engine import calculate_rsu_value, calculate_vesting_schedule, CompanyStage, STAGE_DISCOUNTS
 from engines.bah_engine import bah_fetcher
 from engines.db_engine import log_scenario
 from ai.parser import parse_offer_text
 from utils.formatters import format_currency, format_delta, annual_to_monthly
 from utils.charts import render_wealth_chart, generate_executive_summary
+from utils.design_system import get_streamlit_css, COLORS, SPACING
+
+
+def calculate_4yr_totals(mil_results: dict, civ_results: dict, equity_calc: dict) -> dict:
+    """
+    Calculate 4-year wealth totals for military and civilian paths.
+
+    Args:
+        mil_results: Military compensation results from calculate_rmc
+        civ_results: Civilian compensation results from calculate_civilian_net
+        equity_calc: Equity calculation results from calculate_rsu_value
+
+    Returns:
+        Dictionary with mil_4yr_total, civ_4yr_total, four_year_delta, tsp_match_annual
+    """
+    # Military: 48 months of compensation + 4 years of TSP match (5% of base pay)
+    tsp_match_annual = mil_results['base_pay_monthly'] * 0.05 * 12
+    mil_4yr_total = mil_results['total_monthly'] * 48 + (tsp_match_annual * 4)
+
+    # Civilian: 48 months of net pay + total risk-adjusted equity value
+    equity_value = equity_calc.get('adjusted_value', 0) if equity_calc else 0
+    civ_4yr_total = civ_results['net_monthly'] * 48 + equity_value
+
+    return {
+        'mil_4yr_total': mil_4yr_total,
+        'civ_4yr_total': civ_4yr_total,
+        'four_year_delta': civ_4yr_total - mil_4yr_total,
+        'tsp_match_annual': tsp_match_annual
+    }
 
 
 st.set_page_config(
@@ -23,41 +52,8 @@ st.set_page_config(
 )
 
 
-st.markdown("""
-    <style>
-    /* Hide Streamlit branding */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    
-    .main {
-        background-color: #f8f9fa;
-    }
-    
-    .positive {
-        color: #10b981;
-    }
-    
-    .negative {
-        color: #ef4444;
-    }
-    
-    /* Make tax and bonus detail metrics smaller - reduce all metric values globally */
-    [data-testid="stMetricValue"] {
-        font-size: 0.9rem !important;
-    }
-    
-    [data-testid="stMetricLabel"] {
-        font-size: 0.75rem !important;
-    }
-    
-    /* Ensure side-by-side bordered containers have equal heights */
-    div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlockBorderWrapper"] {
-        min-height: 100%;
-        height: 100%;
-    }
-    </style>
-""", unsafe_allow_html=True)
+# Apply neumorphic design system
+st.markdown(get_streamlit_css(), unsafe_allow_html=True)
 
 
 with st.expander("Enter Offer Letter", expanded=False):
@@ -87,7 +83,7 @@ with st.expander("Enter Offer Letter", expanded=False):
 if 'parsed_data' not in st.session_state:
     st.session_state['parsed_data'] = None
 
-st.markdown("<br>", unsafe_allow_html=True)
+st.write("")  # Spacing
 
 col_mil, col_civ = st.columns(2)
 
@@ -189,33 +185,52 @@ with col_civ:
         
         with st.expander("Equity Package", expanded=default_equity > 0):
             total_equity = st.number_input("Total Equity Grant ($)", min_value=0, max_value=5000000, value=default_equity, step=10000)
-            
+
             col_eq1, col_eq2 = st.columns(2)
             with col_eq1:
                 vesting_years = st.number_input("Vesting Years", min_value=1, max_value=6, value=4)
             with col_eq2:
-                is_public = st.checkbox("Public Company?", value=default_public, help="Private companies get 50% risk discount")
-            
+                company_stage_options = {
+                    "Public (0% discount)": CompanyStage.PUBLIC,
+                    "Pre-IPO (15% discount)": CompanyStage.PRE_IPO,
+                    "Late Stage - Series D+/Unicorn (30%)": CompanyStage.LATE_STAGE,
+                    "Growth - Series B-C (50%)": CompanyStage.GROWTH,
+                    "Early - Seed to Series A (70%)": CompanyStage.EARLY,
+                }
+                default_stage_key = "Public (0% discount)" if default_public else "Growth - Series B-C (50%)"
+                selected_stage = st.selectbox(
+                    "Company Stage",
+                    options=list(company_stage_options.keys()),
+                    index=list(company_stage_options.keys()).index(default_stage_key),
+                    help="Risk discount based on company funding stage"
+                )
+                company_stage = company_stage_options[selected_stage]
+                is_public = company_stage == CompanyStage.PUBLIC
+
             if total_equity > 0:
-                equity_calc = calculate_rsu_value(total_equity, vesting_years, 0, is_public)
+                equity_calc = calculate_rsu_value(total_equity, vesting_years, 0, is_public, company_stage)
                 st.info(f"{equity_calc['liquidity_note']}")
                 if equity_calc['risk_discount'] > 0:
-                    st.warning(f"Applied {equity_calc['risk_discount']:.0f}% risk discount: ${format_currency(equity_calc['adjusted_value'])} adjusted value")
+                    st.caption(f"Adjusted value: {format_currency(equity_calc['adjusted_value'])}")
 
 # Tax Filing Settings - shared section below inputs
-st.markdown("<br>", unsafe_allow_html=True)
+st.write("")  # Spacing
 
 with st.container(border=True):
     st.subheader("Tax Filing Settings")
-    col_tax1, col_tax2 = st.columns(2)
-    
+    col_tax1, col_tax2, col_tax3 = st.columns(3)
+
     with col_tax1:
         st.markdown("**Military Tax Filing**")
         filing_status_mil = st.radio("Filing Status", ["Single", "Married"], key="mil_filing", horizontal=True, label_visibility="collapsed")
-    
+
     with col_tax2:
         st.markdown("**Civilian Tax Filing**")
         filing_status_civ = st.radio("Filing Status", ["Single", "Married"], key="civ_filing", horizontal=True, label_visibility="collapsed")
+
+    with col_tax3:
+        st.markdown("**Dependents**")
+        num_children = st.number_input("Children Under 17", min_value=0, max_value=10, value=0, help="$2,000 Child Tax Credit per child (phases out at high income)")
 
 # Use civ_state as state variable
 state = civ_state
@@ -232,9 +247,10 @@ mil_results = calculate_rmc(
 
 # Calculate civilian results AFTER state and filing_status_civ are defined
 if total_equity > 0:
-    equity_calc = calculate_rsu_value(total_equity, vesting_years, 0, is_public)
+    equity_calc = calculate_rsu_value(total_equity, vesting_years, 0, is_public, company_stage)
     annual_rsu = equity_calc['annualized_value']
 else:
+    equity_calc = {'adjusted_value': 0, 'annualized_value': 0, 'risk_discount': 0, 'liquidity_note': 'No equity'}
     annual_rsu = 0
 
 civ_results = calculate_civilian_net(
@@ -243,7 +259,8 @@ civ_results = calculate_civilian_net(
     total_equity=total_equity,
     state=state,
     filing_status=filing_status_civ.lower(),
-    annual_rsu_value=annual_rsu
+    annual_rsu_value=annual_rsu,
+    num_children=num_children
 )
 
 col_details1, col_details2 = st.columns(2)
@@ -283,17 +300,17 @@ with col_details2:
             st.metric("Federal Tax (Annual)", format_currency(civ_results.get('fed_tax', 0)))
             st.metric("FICA (Annual)", format_currency(civ_results.get('fica_tax', 0)))
 
-st.markdown("<br>", unsafe_allow_html=True)
+st.write("")  # Spacing
 
 delta = mil_results['total_monthly'] - civ_results['net_monthly']
-mil_4yr_total = mil_results['total_monthly'] * 48 + (mil_results['base_pay_monthly'] * 0.05 * 12 * 4)
-if total_equity > 0:
-    equity_calc_top = calculate_rsu_value(total_equity, vesting_years, 0, is_public)
-    civ_4yr_total = civ_results['net_monthly'] * 48 + equity_calc_top['adjusted_value']
-else:
-    civ_4yr_total = civ_results['net_monthly'] * 48
 
-four_year_delta = civ_4yr_total - mil_4yr_total
+# Use consolidated 4-year calculation function
+totals_4yr = calculate_4yr_totals(mil_results, civ_results, equity_calc)
+mil_4yr_total = totals_4yr['mil_4yr_total']
+civ_4yr_total = totals_4yr['civ_4yr_total']
+four_year_delta = totals_4yr['four_year_delta']
+tsp_match = totals_4yr['tsp_match_annual']
+
 tax_efficiency = (1 - civ_results['effective_tax_rate']) * 100
 
 # Silent data capture - log scenario to Supabase without UI feedback
@@ -314,7 +331,7 @@ if st.session_state.get('last_saved') != fingerprint:
     )
     st.session_state['last_saved'] = fingerprint
 
-st.markdown("<br><br>", unsafe_allow_html=True)
+st.write("")  # Spacing
 
 with st.container(border=True):
     st.subheader("Compensation Breakdown")
@@ -378,7 +395,7 @@ with st.container(border=True):
                 format_delta(delta_annual)
             )
 
-st.markdown("<br>", unsafe_allow_html=True)
+st.write("")  # Spacing
 
 col_chart1, col_chart2 = st.columns(2)
 
@@ -389,8 +406,8 @@ with col_chart1:
             go.Bar(
                 x=['Base Pay', 'BAH', 'BAS'],
                 y=[mil_results['base_pay_monthly'], mil_results['bah_monthly'], mil_results['bas_monthly']],
-                marker_color=['#3b82f6', '#10b981', '#10b981'],
-                text=[format_currency(mil_results['base_pay_monthly']), 
+                marker_color=[COLORS['primary'], COLORS['success'], COLORS['success']],
+                text=[format_currency(mil_results['base_pay_monthly']),
                       format_currency(mil_results['bah_monthly']),
                       format_currency(mil_results['bas_monthly'])],
                 textposition='auto',
@@ -400,7 +417,10 @@ with col_chart1:
             height=300,
             margin=dict(l=0, r=0, t=0, b=0),
             yaxis_title="Monthly $",
-            showlegend=False
+            showlegend=False,
+            plot_bgcolor=COLORS['background'],
+            paper_bgcolor=COLORS['background'],
+            yaxis=dict(gridcolor='rgba(163, 177, 198, 0.3)')
         )
         st.plotly_chart(mil_chart, use_container_width=True)
 
@@ -410,13 +430,13 @@ with col_chart2:
         civ_base_monthly = base_salary / 12
         civ_bonus_monthly = civ_results['bonus_net'] / 12
         civ_rsu_monthly = civ_results.get('rsu_net', 0) / 12
-        
+
         civ_chart = go.Figure(data=[
             go.Bar(
                 x=['Base', 'Bonus', 'RSU'],
                 y=[civ_base_monthly, civ_bonus_monthly, civ_rsu_monthly],
-                marker_color=['#3b82f6', '#8b5cf6', '#ec4899'],
-                text=[format_currency(civ_base_monthly), 
+                marker_color=[COLORS['primary'], COLORS['accent'], COLORS['chart_equity']],
+                text=[format_currency(civ_base_monthly),
                       format_currency(civ_bonus_monthly),
                       format_currency(civ_rsu_monthly)],
                 textposition='auto',
@@ -426,11 +446,14 @@ with col_chart2:
             height=300,
             margin=dict(l=0, r=0, t=0, b=0),
             yaxis_title="Monthly $ (After Tax)",
-            showlegend=False
+            showlegend=False,
+            plot_bgcolor=COLORS['background'],
+            paper_bgcolor=COLORS['background'],
+            yaxis=dict(gridcolor='rgba(163, 177, 198, 0.3)')
         )
         st.plotly_chart(civ_chart, use_container_width=True)
 
-st.markdown("<br>", unsafe_allow_html=True)
+st.write("")  # Spacing
 
 # Mobile-optimized: Use tabs instead of 3 columns
 with st.container(border=True):
@@ -465,16 +488,16 @@ with tab_4yr:
         st.markdown(f"### Civilian 4-Year Total")
         st.markdown(f"## {format_currency(civ_4yr_total)}")
 
-st.markdown("<br>", unsafe_allow_html=True)
+st.write("")  # Spacing
 
 with st.container(border=True):
     st.subheader("4-Year Wealth Projection")
     st.caption("Visualizing the 1-Year Cliff Trap")
 
+    # Build cumulative equity schedule for chart
     if total_equity > 0:
-        equity_calc = calculate_rsu_value(total_equity, vesting_years, 0, is_public)
-        vesting_schedule_detail = calculate_vesting_schedule(total_equity, vesting_years, 12, is_public)
-        
+        vesting_schedule_detail = calculate_vesting_schedule(total_equity, vesting_years, 12, is_public, company_stage)
+
         cumulative_equity = {}
         cumulative = 0
         for year in range(5):
@@ -485,8 +508,6 @@ with st.container(border=True):
                 cumulative_equity[year] = cumulative
     else:
         cumulative_equity = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
-
-    tsp_match = mil_results['base_pay_monthly'] * 0.05 * 12
 
     wealth_fig = render_wealth_chart(
         mil_annual_net=mil_results['total_monthly'] * 12,
@@ -500,16 +521,14 @@ with st.container(border=True):
 with st.container(border=True):
     col_4yr1, col_4yr2 = st.columns(2)
     with col_4yr1:
-        mil_4yr = mil_results['total_monthly'] * 48 + (tsp_match * 4)
-        st.metric("Military 4-Year Total", format_currency(mil_4yr))
+        st.metric("Military 4-Year Total", format_currency(mil_4yr_total))
     with col_4yr2:
-        civ_4yr = civ_results['net_monthly'] * 48 + cumulative_equity.get(4, 0)
-        st.metric("Civilian 4-Year Total", format_currency(civ_4yr))
+        st.metric("Civilian 4-Year Total", format_currency(civ_4yr_total))
 
 if cumulative_equity.get(1, 0) == 0 and total_equity > 0:
     st.warning("**1-Year Cliff Alert**: No equity vests in Year 1. You're working the first year for base compensation only!")
 
-st.markdown("<br>", unsafe_allow_html=True)
+st.write("")  # Spacing
 
 with st.expander("About the Tax Advantage"):
     st.markdown("""
@@ -533,15 +552,10 @@ st.sidebar.markdown("**Status:** Professional Dashboard")
 st.sidebar.markdown("---")
 
 if st.sidebar.button("Share Scenario", use_container_width=True, type="primary"):
-    if total_equity > 0:
-        equity_calc_summary = calculate_rsu_value(total_equity, vesting_years, 0, is_public)
-    else:
-        equity_calc_summary = {'adjusted_value': 0, 'annualized_value': 0, 'risk_discount': 0, 'liquidity_note': 'No equity'}
-    
     exec_summary = generate_executive_summary(
         mil_results=mil_results,
         civ_results=civ_results,
-        equity_calc=equity_calc_summary,
+        equity_calc=equity_calc,
         rank=rank,
         base_salary=base_salary,
         total_equity=total_equity

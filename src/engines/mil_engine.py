@@ -4,6 +4,49 @@ from typing import Dict, Optional, Tuple
 from engines.bah_engine import bah_fetcher
 
 
+# 2025 Federal Tax Brackets
+FEDERAL_TAX_BRACKETS = {
+    'single': [
+        {'min': 0, 'max': 11925, 'rate': 0.10},
+        {'min': 11925, 'max': 48475, 'rate': 0.12},
+        {'min': 48475, 'max': 103350, 'rate': 0.22},
+        {'min': 103350, 'max': 197300, 'rate': 0.24},
+        {'min': 197300, 'max': 250525, 'rate': 0.32},
+        {'min': 250525, 'max': 626350, 'rate': 0.35},
+        {'min': 626350, 'max': float('inf'), 'rate': 0.37},
+    ],
+    'married': [
+        {'min': 0, 'max': 23850, 'rate': 0.10},
+        {'min': 23850, 'max': 96950, 'rate': 0.12},
+        {'min': 96950, 'max': 206700, 'rate': 0.22},
+        {'min': 206700, 'max': 394600, 'rate': 0.24},
+        {'min': 394600, 'max': 501050, 'rate': 0.32},
+        {'min': 501050, 'max': 751600, 'rate': 0.35},
+        {'min': 751600, 'max': float('inf'), 'rate': 0.37},
+    ]
+}
+
+
+def get_marginal_tax_rate(taxable_income: float, filing_status: str) -> float:
+    """
+    Calculates the marginal tax rate based on taxable income and filing status.
+
+    Args:
+        taxable_income: Income after standard deduction
+        filing_status: "single" or "married"
+
+    Returns:
+        Marginal tax rate as a decimal (e.g., 0.22 for 22%)
+    """
+    brackets = FEDERAL_TAX_BRACKETS.get(filing_status.lower(), FEDERAL_TAX_BRACKETS['single'])
+
+    for bracket in brackets:
+        if taxable_income <= bracket['max']:
+            return bracket['rate']
+
+    return brackets[-1]['rate']
+
+
 def load_data(filename: str) -> Dict:
     """
     Utility to load JSON data from the data directory.
@@ -91,27 +134,33 @@ def calculate_tax_advantage(base_pay: float, bah: float, bas: float, filing_stat
     Calculates the tax advantage value of non-taxable military allowances.
     This represents how much additional taxable income a civilian would need
     to match the military member's after-tax purchasing power.
-    
+
+    Uses actual marginal tax rate from federal tax brackets rather than
+    simplified estimates.
+
     Args:
         base_pay: Monthly base pay (taxable)
         bah: Monthly BAH (non-taxable)
         bas: Monthly BAS (non-taxable)
         filing_status: "single" or "married"
-        
+
     Returns:
-        Tax advantage value in dollars
+        Tax advantage value in dollars (monthly)
     """
     annual_base = base_pay * 12
     annual_allowances = (bah + bas) * 12
-    
-    standard_deduction = 15750 if filing_status.lower() == "single" else 31500
-    
+
+    # 2025 standard deductions
+    standard_deduction = 15000 if filing_status.lower() == "single" else 30000
+
     taxable_income = max(0, annual_base - standard_deduction)
-    
-    effective_rate = 0.15 if taxable_income < 50000 else 0.22
-    
-    tax_advantage_annual = annual_allowances * effective_rate
-    
+
+    # Get actual marginal rate based on taxable income
+    marginal_rate = get_marginal_tax_rate(taxable_income, filing_status)
+
+    # The tax advantage is the tax that would be owed if allowances were taxable
+    tax_advantage_annual = annual_allowances * marginal_rate
+
     return tax_advantage_annual / 12
 
 

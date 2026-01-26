@@ -1,5 +1,6 @@
 import plotly.graph_objects as go
 from typing import Dict, List
+from utils.design_system import get_chart_colors, get_chart_layout_defaults, COLORS
 
 
 def render_wealth_chart(
@@ -11,54 +12,57 @@ def render_wealth_chart(
     """
     Creates a 4-year wealth accumulation chart comparing military vs. civilian paths.
     Visualizes the "1-year cliff trap" where equity doesn't vest until Year 2.
-    
+
     Args:
         mil_annual_net: Annual net military compensation
         civ_annual_net: Annual net civilian compensation (without equity)
         equity_vesting_schedule: Dict mapping year -> cumulative vested equity
         tsp_match_annual: Annual TSP matching contribution (default 0)
-        
+
     Returns:
         Plotly figure object showing 4-year wealth comparison
     """
+    chart_colors = get_chart_colors()
+    layout_defaults = get_chart_layout_defaults()
+
     years = [0, 1, 2, 3, 4]
-    
+
     mil_cumulative = []
     civ_cumulative = []
-    
+
     for year in years:
         mil_wealth = (mil_annual_net * year) + (tsp_match_annual * year)
         mil_cumulative.append(mil_wealth)
-        
+
         civ_base_wealth = civ_annual_net * year
-        
+
         equity_vested = equity_vesting_schedule.get(year, 0)
-        
+
         civ_total_wealth = civ_base_wealth + equity_vested
         civ_cumulative.append(civ_total_wealth)
-    
+
     fig = go.Figure()
-    
+
     fig.add_trace(go.Scatter(
         x=years,
         y=mil_cumulative,
         mode='lines+markers',
         name='Military Path',
-        line=dict(color='#10b981', width=3),
+        line=dict(color=chart_colors['military'], width=3),
         marker=dict(size=10, symbol='circle'),
         hovertemplate='<b>Year %{x}</b><br>Cumulative: $%{y:,.0f}<extra></extra>'
     ))
-    
+
     fig.add_trace(go.Scatter(
         x=years,
         y=civ_cumulative,
         mode='lines+markers',
         name='Civilian Path',
-        line=dict(color='#3b82f6', width=3),
+        line=dict(color=chart_colors['civilian'], width=3),
         marker=dict(size=10, symbol='square'),
         hovertemplate='<b>Year %{x}</b><br>Cumulative: $%{y:,.0f}<extra></extra>'
     ))
-    
+
     for year in [1, 2, 3, 4]:
         if year in equity_vesting_schedule and equity_vesting_schedule[year] > equity_vesting_schedule.get(year - 1, 0):
             vested_this_year = equity_vesting_schedule[year] - equity_vesting_schedule.get(year - 1, 0)
@@ -70,18 +74,18 @@ def render_wealth_chart(
                 arrowhead=2,
                 arrowsize=1,
                 arrowwidth=2,
-                arrowcolor="#ec4899",
+                arrowcolor=chart_colors['equity'],
                 ax=30,
                 ay=-40,
-                font=dict(size=10, color="#ec4899")
+                font=dict(size=10, color=chart_colors['equity'])
             )
-    
+
     fig.update_layout(
         title={
             'text': "4-Year Wealth Accumulation: Military vs. Civilian",
             'x': 0.5,
             'xanchor': 'center',
-            'font': {'size': 20, 'color': '#1f2937'}
+            'font': {'size': 18, 'color': chart_colors['text']}
         },
         xaxis_title="Year",
         yaxis_title="Cumulative Wealth ($)",
@@ -93,22 +97,28 @@ def render_wealth_chart(
             y=0.99,
             xanchor="left",
             x=0.01,
-            bgcolor="rgba(255,255,255,0.8)"
+            bgcolor=f"rgba(224, 229, 236, 0.9)"
         ),
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor=chart_colors['background'],
+        paper_bgcolor=chart_colors['background'],
         xaxis=dict(
             tickmode='linear',
             tick0=0,
             dtick=1,
-            gridcolor='rgba(0,0,0,0.1)'
+            gridcolor=chart_colors['grid'],
+            linecolor=COLORS['shadow_dark']
         ),
         yaxis=dict(
-            gridcolor='rgba(0,0,0,0.1)',
-            tickformat='$,.0f'
+            gridcolor=chart_colors['grid'],
+            tickformat='$,.0f',
+            linecolor=COLORS['shadow_dark']
+        ),
+        font=dict(
+            family=layout_defaults['font']['family'],
+            color=chart_colors['text']
         )
     )
-    
+
     if civ_cumulative[1] == civ_cumulative[0] + (civ_annual_net * 1):
         fig.add_annotation(
             x=1,
@@ -118,12 +128,12 @@ def render_wealth_chart(
             arrowhead=2,
             arrowsize=1,
             arrowwidth=2,
-            arrowcolor="#ef4444",
+            arrowcolor=COLORS['error'],
             ax=-50,
             ay=-50,
-            font=dict(size=12, color="#ef4444", family="Arial Black")
+            font=dict(size=12, color=COLORS['error'], family="Arial Black")
         )
-    
+
     return fig
 
 
@@ -134,73 +144,78 @@ def render_breakeven_analysis(
 ) -> go.Figure:
     """
     Creates a breakeven analysis chart showing when civilian offer overtakes military.
-    
+
     Args:
         mil_monthly: Monthly military net pay
         civ_monthly: Monthly civilian net pay (without equity)
         equity_annual: Annual equity vesting value
-        
+
     Returns:
         Plotly figure showing monthly comparison over 48 months
     """
+    chart_colors = get_chart_colors()
+
     months = list(range(0, 49))
-    
+
     mil_cumulative = [mil_monthly * month for month in months]
     civ_cumulative = []
-    
+
     for month in months:
         year = month // 12
         civ_base = civ_monthly * month
         equity_vested = equity_annual * year
         civ_cumulative.append(civ_base + equity_vested)
-    
+
     fig = go.Figure()
-    
+
     fig.add_trace(go.Scatter(
         x=months,
         y=mil_cumulative,
         mode='lines',
         name='Military',
-        line=dict(color='#10b981', width=2),
+        line=dict(color=chart_colors['military'], width=2),
         fill='tozeroy',
         fillcolor='rgba(16, 185, 129, 0.1)'
     ))
-    
+
     fig.add_trace(go.Scatter(
         x=months,
         y=civ_cumulative,
         mode='lines',
         name='Civilian',
-        line=dict(color='#3b82f6', width=2),
+        line=dict(color=chart_colors['civilian'], width=2),
         fill='tozeroy',
         fillcolor='rgba(59, 130, 246, 0.1)'
     ))
-    
+
     breakeven_month = None
     for month in months:
         if civ_cumulative[month] > mil_cumulative[month]:
             breakeven_month = month
             break
-    
+
     if breakeven_month:
         fig.add_vline(
             x=breakeven_month,
             line_dash="dash",
-            line_color="red",
+            line_color=COLORS['error'],
             annotation_text=f"Breakeven: Month {breakeven_month}",
             annotation_position="top"
         )
-    
+
     fig.update_layout(
         title="Break-Even Analysis: When Does Civilian Overtake Military?",
         xaxis_title="Month",
         yaxis_title="Cumulative Wealth ($)",
         hovermode='x unified',
         height=400,
-        yaxis=dict(tickformat='$,.0f'),
+        plot_bgcolor=chart_colors['background'],
+        paper_bgcolor=chart_colors['background'],
+        yaxis=dict(tickformat='$,.0f', gridcolor=chart_colors['grid']),
+        xaxis=dict(gridcolor=chart_colors['grid']),
         showlegend=True
     )
-    
+
     return fig
 
 
